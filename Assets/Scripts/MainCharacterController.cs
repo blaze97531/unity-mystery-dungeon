@@ -24,26 +24,33 @@ public class MainCharacterController : MonoBehaviour {
 		if (Input.GetKey (KeyCode.D)) {
 			transform.Translate (Time.deltaTime * speed * Vector3.right);
 		}
-		if (Input.GetKey (KeyCode.UpArrow)) {
-			GameObject bul = (GameObject) Instantiate (bullet, transform.position, Quaternion.identity);
-			Rigidbody rb = bul.GetComponent<Rigidbody>();
-			rb.AddForce(Vector3.forward*bulletspeed);
+		if (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow) || Input.GetKey (KeyCode.RightArrow)||Input.GetKey (KeyCode.LeftArrow)) {
+			fire ();
 		}
-		if (Input.GetKey (KeyCode.DownArrow)) {
-			GameObject bul = (GameObject) Instantiate (bullet, transform.position, Quaternion.identity);
-			Rigidbody rb = bul.GetComponent<Rigidbody>();
-			rb.AddForce(Vector3.back*bulletspeed);
-		}
-		if (Input.GetKey (KeyCode.LeftArrow)) {
-			GameObject bul = (GameObject) Instantiate (bullet, transform.position, Quaternion.identity);
-			Rigidbody rb = bul.GetComponent<Rigidbody>();
-			rb.AddForce(Vector3.left*bulletspeed);
-		}
-		if (Input.GetKey (KeyCode.RightArrow)) {
-			GameObject bul = (GameObject) Instantiate (bullet, transform.position, Quaternion.identity);
-			Rigidbody rb = bul.GetComponent<Rigidbody>();
-			rb.AddForce(Vector3.right*bulletspeed);
-		}
+}
 
+	void fire(){
+		Vector3 direction = Vector3.zero;
+		if (Input.GetKey (KeyCode.UpArrow)) {
+			if (Input.GetKey (KeyCode.A)) {
+				direction = new Vector3(-.25f,0,.75f);
+			} else if (Input.GetKey (KeyCode.D)) {
+				direction = new Vector3(.25f,0,.75f);
+			} else {
+				direction = Vector3.forward;
+			}
+		}
+		else if (Input.GetKey (KeyCode.DownArrow)) {
+			direction =  Vector3.back;
+		}
+		else if (Input.GetKey (KeyCode.LeftArrow)) {
+			direction = Vector3.left;
+		}
+		else if (Input.GetKey (KeyCode.RightArrow)) {
+			direction = Vector3.right;
+		}
+		GameObject bul = (GameObject) Instantiate (bullet, transform.position, Quaternion.identity);
+		Rigidbody rb = bul.GetComponent<Rigidbody>();
+		rb.AddForce(direction*bulletspeed);
 	}
 }
