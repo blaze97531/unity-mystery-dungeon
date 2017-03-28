@@ -16,9 +16,10 @@ public class EntityBulletCollisionScript : MonoBehaviour {
 
 	void OnTriggerEnter (Collider other) {
 		if (other.CompareTag ("Bullet")) {
+			float damageInflicted = other.GetComponent<BulletScript> ().getDamage();
 			Destroy (other.gameObject);
 			HealthTrackingScript thisObjectsHealth = gameObject.GetComponent<HealthTrackingScript> ();
-			thisObjectsHealth.inflictDamage (1.0f);
+			thisObjectsHealth.inflictDamage (damageInflicted);
 		}
 	}
 }

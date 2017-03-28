@@ -23,5 +23,5 @@ public class HealthTrackingScript : MonoBehaviour {
 			Destroy (gameObject);
 		}
 	}
-
+		
 }
