@@ -15,13 +15,14 @@ public class dual : Weapon {
 
 	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position){
 		Vector3 direction = base.getDirection ();
-		for (float i = -0.5f; i <= 0.5f; i = i +1) { 
+		Vector3 pos = position;
+		for (float i = -0.25f; i <= 0.25f; i = i + 0.5f) { 
 			if (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow)) {
-				position.x = position.x + i;
+				pos.x = position.x + i;
 			} else if (Input.GetKey (KeyCode.RightArrow) || Input.GetKey (KeyCode.LeftArrow)) {
-				position.z = position.z + i;
+				pos.z = position.z + i;
 			}
-			GameObject bul = (GameObject)Instantiate (bullet, position + direction, Quaternion.identity); //transform.position + direction so the bullet starts in front of the player
+			GameObject bul = (GameObject)Instantiate (bullet, pos + direction, Quaternion.identity); //transform.position + direction so the bullet starts in front of the player
 			bul.transform.localScale = bul.transform.localScale * bulletSize; //scale the size of the bullet.  The bullet's collider should also scale with this
 			bul.GetComponent<BulletScript> ().setDamage (bulletDamage);
 			bul.GetComponent<BulletScript> ().setSpeed (bulletSpeed);
