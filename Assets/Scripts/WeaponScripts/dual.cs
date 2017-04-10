@@ -22,7 +22,7 @@ public class dual : Weapon {
 			} else if (Input.GetKey (KeyCode.RightArrow) || Input.GetKey (KeyCode.LeftArrow)) {
 				pos.z = position.z + i;
 			}
-			GameObject bul = (GameObject)Instantiate (bullet, pos + direction, Quaternion.identity); //transform.position + direction so the bullet starts in front of the player
+			GameObject bul = (GameObject)Instantiate (bullet, pos + getGunLocationOffset(), Quaternion.identity); //transform.position + direction so the bullet starts in front of the player
 			bul.transform.localScale = bul.transform.localScale * bulletSize; //scale the size of the bullet.  The bullet's collider should also scale with this
 			bul.GetComponent<BulletScript> ().setDamage (bulletDamage);
 			bul.GetComponent<BulletScript> ().setSpeed (bulletSpeed);

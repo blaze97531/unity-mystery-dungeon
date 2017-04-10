@@ -16,7 +16,7 @@ public class shotgun : Weapon {
 	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position){
 		Vector3 direction = base.getDirection ();
 		for (int i = -2; i <= 2; i++) { //essentially fires 5 bullets in an arch
-			GameObject bul = (GameObject)Instantiate (bullet, position + direction, Quaternion.identity);
+			GameObject bul = (GameObject)Instantiate (bullet, position + getGunLocationOffset(), Quaternion.identity);
 			bul.transform.localScale = bul.transform.localScale * bulletSize;
 			bul.GetComponent<BulletScript> ().setDamage (bulletDamage);
 			bul.GetComponent<BulletScript> ().setSpeed (bulletSpeed);
