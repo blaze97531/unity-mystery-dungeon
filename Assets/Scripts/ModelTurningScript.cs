@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ModelTurningScript : MonoBehaviour {
-	public Vector3 angles;
 	// Use this for initialization
 	void Start () {
 		
@@ -11,7 +10,6 @@ public class ModelTurningScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		angles = transform.eulerAngles;
 		if (Input.GetKey (KeyCode.UpArrow)) {
 			transform.eulerAngles = new Vector3 (0, 0, 0);
 		} else if (Input.GetKey (KeyCode.DownArrow)) {

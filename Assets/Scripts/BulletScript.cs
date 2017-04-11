@@ -5,8 +5,15 @@ using UnityEngine;
 //This script will carry the bullet's properties, such as damage, speed (for calculating knockback), and other affects (slow, poison, peircing, ect.)
 public class BulletScript : MonoBehaviour {
 	private float damage;
-	private float speed; //this is for determining knockback, for whenever we decide to implement that
+	private float knockBack; //this is for determining knockback, for whenever we decide to implement that
+	private Vector3 direction;
 
+	public void setDirection(Vector3 dir){
+		direction = dir;
+	}
+	public Vector3 getDirection(){
+		return direction;
+	}
 	//would you rather use getters and setters? or just have public variables?
 	public void setDamage(float bulletDamage){
 		damage = bulletDamage;
@@ -16,12 +23,12 @@ public class BulletScript : MonoBehaviour {
 		return damage;
 	}
 
-	public void setSpeed(float bulletSpeed){
-		speed = bulletSpeed;
+	public void setKnockBack(float bulletKnockBack) {
+		knockBack = bulletKnockBack;
 	}
 
-	public float getSpeed(){
-		return speed;
+	public float getKnockBack() {
+		return knockBack;
 	}
 
 }

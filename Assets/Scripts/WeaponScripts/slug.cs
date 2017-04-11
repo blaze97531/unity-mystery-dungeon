@@ -13,7 +13,7 @@ public class slug : Weapon {
 		return bulletDelay*3;
 	}
 
-	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position){
-		base.fire (bulletSpeed/1.25f, bulletDamage*5, bulletSize*3, position);
+	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
+		base.fire (bulletSpeed/1.25f, bulletDamage*5, bulletSize*3, bulletKnockBack*2, position);
 	}
 }
