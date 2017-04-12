@@ -13,13 +13,14 @@ public class shotgun : Weapon {
 		return bulletDelay*3;
 	}
 
-	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position){
+	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
 		Vector3 direction = base.getDirection ();
 		for (int i = -2; i <= 2; i++) { //essentially fires 5 bullets in an arch
 			GameObject bul = (GameObject)Instantiate (bullet, position + getGunLocationOffset(), Quaternion.identity);
 			bul.transform.localScale = bul.transform.localScale * bulletSize;
 			bul.GetComponent<BulletScript> ().setDamage (bulletDamage);
-			bul.GetComponent<BulletScript> ().setSpeed (bulletSpeed);
+			bul.GetComponent<BulletScript> ().setKnockBack (bulletKnockBack);
+			bul.GetComponent<BulletScript> ().setDirection (direction);
 			Rigidbody rb = bul.GetComponent<Rigidbody> ();
 			if (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow)) {	//I cant say this math entirely checks out, but it actually looks really nice in game
 				rb.AddForce (new Vector3 (direction.x + Mathf.Sin (i * Mathf.PI / 28), 0, direction.z * Mathf.Cos (i * Mathf.PI / 12)) * bulletSpeed);

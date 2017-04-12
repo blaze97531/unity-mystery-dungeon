@@ -13,7 +13,7 @@ public class dual : Weapon {
 		return bulletDelay*1.5f;
 	}
 
-	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position){
+	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
 		Vector3 direction = base.getDirection ();
 		Vector3 pos = position;
 		for (float i = -0.25f; i <= 0.25f; i = i + 0.5f) { 
@@ -25,7 +25,9 @@ public class dual : Weapon {
 			GameObject bul = (GameObject)Instantiate (bullet, pos + getGunLocationOffset(), Quaternion.identity); //transform.position + direction so the bullet starts in front of the player
 			bul.transform.localScale = bul.transform.localScale * bulletSize; //scale the size of the bullet.  The bullet's collider should also scale with this
 			bul.GetComponent<BulletScript> ().setDamage (bulletDamage);
-			bul.GetComponent<BulletScript> ().setSpeed (bulletSpeed);
+			bul.GetComponent<BulletScript> ().setKnockBack (bulletKnockBack);
+			bul.GetComponent<BulletScript> ().setDirection (direction);
+
 			Rigidbody rb = bul.GetComponent<Rigidbody> ();
 			rb.AddForce (direction * bulletSpeed);
 
