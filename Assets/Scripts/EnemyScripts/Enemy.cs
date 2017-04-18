@@ -5,12 +5,12 @@ using UnityEngine;
 public class Enemy : MonoBehaviour {
 	public GameObject player;
 
-	public Weapon weapon;
+	public EnemyWeapon weapon;
 	public float bulletSpeed;
-	public float bulletKnockBack = 1;
-	public float bulletSize; //possibly scale this with damage
-	public float bulletDelay; //at 0, the gun fires every frame
+	public float bulletSize;
+	public float bulletDelay;
 	public float bulletDamage;
+	public float contactDamage;
 	protected float currTime = 0;
 
 	public float movementSpeed;
@@ -45,5 +45,32 @@ public class Enemy : MonoBehaviour {
 		if (current_health <= 0.0f) {
 			Destroy (gameObject);
 		}
+	}
+
+	//some useful methods for enemy AIs
+	public bool lookingAtPlayer(){
+		Ray forwards = new Ray (transform.position, transform.forward);
+		RaycastHit[] hits = Physics.RaycastAll (forwards, 100);
+		foreach(RaycastHit h in hits){
+			if (h.collider.gameObject.name.Equals("PlayerCollider")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public bool canSeePlayer(){
+		Ray forwards = new Ray (transform.position, player.transform.position);
+		RaycastHit[] hits = Physics.RaycastAll (forwards, 100);
+		foreach(RaycastHit h in hits){
+			if (h.collider.gameObject.name.Equals("PlayerCollider")) 
+				return true;
+		}
+		return false;
+	}
+
+	public float getContactDamage(){
+		return contactDamage;
 	}
 }
