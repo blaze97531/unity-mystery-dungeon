@@ -10,12 +10,8 @@ public class Turret : Enemy {
 		dir.y = 0;
 		Quaternion rot = Quaternion.LookRotation (dir,Vector3.up);
 		transform.rotation = Quaternion.Slerp(transform.rotation, rot, turnSpeed * Time.deltaTime);
-		currTime = currTime + Time.deltaTime;
 		if (lookingAtPlayer ()) {
-			if (currTime >= (weapon.getBulletDelay(bulletDelay))) {
-				weapon.fire (bulletSpeed, bulletDamage, bulletSize, transform.position, transform.forward);
-				currTime = 0;
-			}
+			weapon.fire (bulletDelay, bulletSpeed, bulletDamage, bulletSize, transform.position, transform.forward);
 		}
 	}
 }

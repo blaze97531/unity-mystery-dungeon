@@ -9,11 +9,7 @@ public class slug : Weapon {
 		bullet = Resources.Load("Prefab/Bullet");
 	}
 
-	public override float getBulletDelay(float bulletDelay){
-		return bulletDelay*3;
-	}
-
-	public override void fire(float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
-		base.fire (bulletSpeed/1.25f, bulletDamage*5, bulletSize*3, bulletKnockBack*2, position);
+	public override void fire(float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
+		base.fire (bulletDelay*3, bulletSpeed/1.25f, bulletDamage*5, bulletSize*3, bulletKnockBack*2, position);
 	}
 }

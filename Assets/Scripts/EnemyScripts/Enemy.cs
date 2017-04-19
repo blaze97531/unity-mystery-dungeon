@@ -11,7 +11,6 @@ public class Enemy : MonoBehaviour {
 	public float bulletDelay;
 	public float bulletDamage;
 	public float contactDamage;
-	protected float currTime = 0;
 
 	public float movementSpeed;
 	public float turnSpeed;
@@ -50,19 +49,22 @@ public class Enemy : MonoBehaviour {
 	//some useful methods for enemy AIs
 	public bool lookingAtPlayer(){
 		Ray forwards = new Ray (transform.position, transform.forward);
-		RaycastHit[] hits = Physics.RaycastAll (forwards, 100);
+		RaycastHit[] hits = Physics.RaycastAll (forwards, Vector3.Distance(transform.position, player.transform.position));
+		bool playerHit = false;
 		foreach(RaycastHit h in hits){
-			if (h.collider.gameObject.name.Equals("PlayerCollider")) {
-				return true;
+			if (h.collider.gameObject.name.Equals ("PlayerCollider")) {
+				playerHit = true;
+			} else if (h.collider.tag == "Wall") {
+				return false;
 			}
 		}
 
-		return false;
+		return playerHit;
 	}
 
 	public bool canSeePlayer(){
 		Ray forwards = new Ray (transform.position, player.transform.position);
-		RaycastHit[] hits = Physics.RaycastAll (forwards, 100);
+		RaycastHit[] hits = Physics.RaycastAll (forwards, Vector3.Distance(transform.position, player.transform.position));
 		foreach(RaycastHit h in hits){
 			if (h.collider.gameObject.name.Equals("PlayerCollider")) 
 				return true;

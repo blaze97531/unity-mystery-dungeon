@@ -9,10 +9,9 @@ public class MainCharacterController : MonoBehaviour {
 	public float bulletSize = 1f; //possibly scale this with damage
 	public float bulletDelay = 0.5f; //at 0, the gun fires every frame
 	public float bulletDamage = 5f;
-	public float invincibilityTime = 0.5f;
+	public float invincibilityTime = 1;
 	private float invincibleTime;
 	public Weapon weapon;
-	private float currTime = 0;
 
 	public float maxHealth = 10;
 	public float currentHealth;
@@ -48,13 +47,7 @@ public class MainCharacterController : MonoBehaviour {
 		} else if( Time.time >= invincibleTime && !mesh.enabled){
 			mesh.enabled = true;
 		}
-		currTime = currTime + Time.fixedDeltaTime;
-		if (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow) || Input.GetKey (KeyCode.RightArrow)||Input.GetKey (KeyCode.LeftArrow)) {
-			if (currTime >= (weapon.getBulletDelay(bulletDelay))) { //my current formula for bullet delay
-				weapon.fire (bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
-				currTime = 0;
-			}
-		}
+		weapon.fire (bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
 	}
 	public void OnTriggerEnter (Collider other) {
 		if (other.CompareTag ("EnemyBullet")) {
@@ -72,7 +65,7 @@ public class MainCharacterController : MonoBehaviour {
 
 	public void inflictDamage (float amount) {
 		currentHealth -= amount;
-		invincibleTime = Time.time + invincibilityTime;
+		invincibleTime = Time.time + (invincibilityTime * amount);
 		if (currentHealth <= 0.0f) {
 			//Destroy (gameObject); Player lost
 		}
