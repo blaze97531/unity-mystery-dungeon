@@ -11,7 +11,7 @@ public class EnemyWeapon : MonoBehaviour {
 		weaponName = "ForwardsShot";
 		bullet = Resources.Load("Prefab/EnemyBullet");
 	}
-
+		
 	public virtual void fire(float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position, Vector3 direction){ 
 		currTime = currTime + Time.deltaTime;
 		if (currTime >= bulletDelay) {

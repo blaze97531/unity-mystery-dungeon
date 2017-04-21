@@ -14,7 +14,6 @@ public class GenerateRoom : MonoBehaviour {
 		wallPrefab = Resources.Load<GameObject> ("Prefab/Wall");
 		emptyPrefab = Resources.Load<GameObject> ("Prefab/EmptyGameObject");
 
-//		generateRandomRoom (transform.localPosition);
 		Floor floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
 	}
@@ -23,7 +22,11 @@ public class GenerateRoom : MonoBehaviour {
 		EMPTY, WALL, DOOR
 	}
 
-	private static CellEdge randomCellEdge (float prob_empty, float prob_wall) {
+	private enum Direction {
+		X, Z
+	}
+
+	private static CellEdge RandomCellEdge (float prob_empty, float prob_wall) {
 		float random = Random.value;
 
 		if (random <= prob_empty)
@@ -34,6 +37,14 @@ public class GenerateRoom : MonoBehaviour {
 			return CellEdge.DOOR;
 	}
 
+	private static Direction RandomDirection () {
+		int random = Random.Range (0, 2);
+		if (random == 0)
+			return Direction.X;
+		else
+			return Direction.Z;
+	}
+
 	private class Cell {
 		public CellEdge pos_x_edge;
 		public CellEdge pos_z_edge;
@@ -42,6 +53,8 @@ public class GenerateRoom : MonoBehaviour {
 	private class Floor {
 		private GenerateRoom enclosingInstance;
 		private Cell[,] cells;
+		private CellEdge[] negative_x_border;
+		private CellEdge[] negative_z_border;
 		private int n_x, n_z;
 		private int[] delta_xs;
 		private int[] delta_zs;
@@ -62,6 +75,16 @@ public class GenerateRoom : MonoBehaviour {
 				for (int j = 0; j < n_z; j++) {
 					cells[i, j] = new Cell();
 				}
+			}
+
+			negative_x_border = new CellEdge[n_z];
+			for (int i = 0; i < n_z; i++) {
+				negative_x_border[i] = CellEdge.WALL;
+			}
+
+			negative_z_border = new CellEdge[n_x];
+			for (int i = 0; i < n_x; i++) {
+				negative_z_border[i] = CellEdge.WALL;
 			}
 
 
@@ -89,10 +112,10 @@ public class GenerateRoom : MonoBehaviour {
 			// Now generate 2 x 2 segments of the grid.
 			for (int i = 0; i < n_x; i += 2) {
 				for (int j = 0; j < n_z; j += 2) {
-					cells[i, j].pos_x_edge = randomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
-					cells[i, j].pos_z_edge = randomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
-					cells[i+1, j].pos_z_edge = randomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
-					cells[i, j+1].pos_x_edge = randomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
+					cells[i, j].pos_x_edge = RandomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
+					cells[i, j].pos_z_edge = RandomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
+					cells[i+1, j].pos_z_edge = RandomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
+					cells[i, j+1].pos_x_edge = RandomCellEdge(EMPTY_CHANCE, WALL_CHANCE);
 
 					cells[i+1, j].pos_x_edge = CellEdge.WALL;
 					cells[i, j+1].pos_z_edge = CellEdge.WALL;
@@ -101,7 +124,41 @@ public class GenerateRoom : MonoBehaviour {
 				}
 			}
 
-			// Next, need to use Union find to add doors until the entire floor is traversable.
+			// Use union find to determine the individual rooms
+			UnionFind<Cell> unionFind = new UnionFind<Cell>();
+			foreach (Cell c in cells) {
+				unionFind.MakeSingleton(c);
+			}
+
+			for (int i = 0; i < n_x; i++) {
+				for (int j = 0; j < n_z; j++) {
+					if (i + 1 < n_x && cells[i,j].pos_x_edge == CellEdge.EMPTY) {
+						unionFind.Union(cells[i,j], cells[i+1, j]);
+					}
+					if (j + 1 < n_z && cells[i,j].pos_z_edge == CellEdge.EMPTY) {
+						unionFind.Union(cells[i,j], cells[i,j+1]);
+					}
+				}
+			}
+			// Each set within the unionFind structure now represents a room.
+			// TODO: Now, need to get the rooms, and do something with that information.
+
+
+			// Join the rooms by adding doors. Enough doors have been added once the entire structure is a single set.
+			while (unionFind.NumberOfSets() > 1) {
+				// Attempt to randomly replace a wall with a door.
+				int x = Random.Range(0, n_x);
+				int z = Random.Range(0, n_z);
+				Direction dir = RandomDirection();
+
+				if (dir == Direction.X && x + 1 < n_x && cells[x,z].pos_x_edge == CellEdge.WALL) {
+					cells[x,z].pos_x_edge = CellEdge.DOOR;
+					unionFind.Union(cells[x,z], cells[x+1,z]);
+				} else if (dir == Direction.Z && z + 1 < n_z && cells[x,z].pos_z_edge == CellEdge.WALL) {
+					cells[x,z].pos_z_edge = CellEdge.DOOR;
+					unionFind.Union(cells[x,z], cells[x,z+1]);
+				}
+			}
 		}
 
 		public void generateGameObjects () {
@@ -114,50 +171,96 @@ public class GenerateRoom : MonoBehaviour {
 
 			for (int i = 0; i < n_x; i++) {
 				for (int j = 0; j < n_z; j++) {
-
 					if (cells [i, j].pos_x_edge == CellEdge.WALL) {
-						Vector3 position = new Vector3 (cumulative_delta_xs [i] + delta_xs [i], enclosingInstance.wallPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f);
-						GameObject wall = Instantiate<GameObject> (enclosingInstance.wallPrefab, position, Quaternion.identity, enclosingInstance.transform);
-						wall.transform.localScale = new Vector3 (enclosingInstance.wallPrefab.transform.localScale.x, enclosingInstance.wallPrefab.transform.localScale.y, delta_zs [j]);
-					} 
+						enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i], cumulative_delta_zs [j] + delta_zs [j] / 2.0f, Direction.Z, delta_zs [j]);
+					} else if (cells [i, j].pos_x_edge == CellEdge.DOOR) {
+						enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i], cumulative_delta_zs [j] + delta_zs [j] / 2.0f, Direction.Z, delta_zs [j]);
+					}
 
 					if (cells [i, j].pos_z_edge == CellEdge.WALL) {
-						Vector3 position = new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.wallPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j]);
-						GameObject wall = Instantiate<GameObject> (enclosingInstance.wallPrefab, position, Quaternion.identity, enclosingInstance.transform);
-						wall.transform.localScale = new Vector3 (delta_xs[i], enclosingInstance.wallPrefab.transform.localScale.y, enclosingInstance.wallPrefab.transform.localScale.z);
-					} 
+						enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, cumulative_delta_zs [j] + delta_zs [j], Direction.X, delta_xs [i]);
+					} else if (cells [i, j].pos_z_edge == CellEdge.DOOR) {
+						enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, cumulative_delta_zs [j] + delta_zs [j], Direction.X, delta_xs [i]);
+					}
+				}
+			}
 
+			for (int i = 0; i < n_z; i++) {
+				if (negative_x_border [i] == CellEdge.WALL) {
+					enclosingInstance.CreateWall (0.0f, cumulative_delta_zs [i] + delta_zs [i] / 2.0f, Direction.Z, delta_zs [i]);
+				} else if (negative_x_border [i] == CellEdge.DOOR) {
+					enclosingInstance.CreateDoor (0.0f, cumulative_delta_zs [i] + delta_zs [i] / 2.0f, Direction.Z, delta_zs [i]);
+				}
+			}
+
+			for (int i = 0; i < n_x; i++) {
+				if (negative_z_border [i] == CellEdge.WALL) {
+					enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, 0.0f, Direction.X, delta_xs [i]);
+				} else if (negative_z_border [i] == CellEdge.DOOR) {
+					enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, 0.0f, Direction.X, delta_xs [i]);
 				}
 			}
 		}
 	}
 
-	void generateRandomRoom (Vector3 roomCenter) {
-		int x_size = Random.Range (5, 10);
-		int z_size = Random.Range (5, 10);
-
-		GameObject ground = Instantiate<GameObject> (groundPrefab, roomCenter, Quaternion.identity, transform);
-		ground.transform.localScale = new Vector3 (x_size, groundPrefab.transform.localScale.y, z_size);
-
-		GameObject positiveXWall = Instantiate<GameObject> (wallPrefab, roomCenter, Quaternion.identity, transform);
-		positiveXWall.transform.Translate (x_size / 2 * Vector3.right);
-		positiveXWall.transform.localScale = new Vector3 (wallPrefab.transform.localScale.x, wallPrefab.transform.localScale.y, z_size);
-
-		GameObject negativeXWall = Instantiate<GameObject> (wallPrefab, roomCenter, Quaternion.identity, transform);
-		negativeXWall.transform.Translate (x_size / 2 * Vector3.left);
-		negativeXWall.transform.localScale = new Vector3 (wallPrefab.transform.localScale.x, wallPrefab.transform.localScale.y, z_size);
-
-		GameObject positiveZWall = Instantiate<GameObject> (wallPrefab, roomCenter, Quaternion.identity, transform);
-		positiveZWall.transform.Translate (z_size / 2 * Vector3.forward);
-		positiveZWall.transform.localScale = new Vector3 (x_size, wallPrefab.transform.localScale.y, wallPrefab.transform.localScale.z);
-
-		GameObject negativeZWall = Instantiate<GameObject> (wallPrefab, roomCenter, Quaternion.identity, transform);
-		negativeZWall.transform.Translate (z_size / 2 * Vector3.back);
-		negativeZWall.transform.localScale = new Vector3 (x_size, wallPrefab.transform.localScale.y, wallPrefab.transform.localScale.z);
+	private void CreateWall (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
+		Vector3 position = new Vector3 (x_position, wallPrefab.transform.position.y, z_position);
+		GameObject wall = Instantiate<GameObject> (wallPrefab, position, Quaternion.identity, transform);
+		if (longEdge == Direction.X) {
+			wall.transform.localScale = new Vector3 (longEdgeLength, wallPrefab.transform.localScale.y, wallPrefab.transform.localScale.z);
+		} else {
+			wall.transform.localScale = new Vector3 (wallPrefab.transform.localScale.x, wallPrefab.transform.localScale.y, longEdgeLength);
+		}
 	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+
+	private void CreateDoor (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
+		// TODO
+	}
+
+	// Very poorly optimized implementation of the UnionFind data structure
+	private class UnionFind<T> {
+		private List<List<T>> sets;
+
+		public UnionFind () {
+			sets = new List<List<T>>();
+		}
+
+		/* Makes a new set containing a single element. */
+		public void MakeSingleton (T element) {
+			List<T> newSet = new List<T> ();
+			newSet.Add (element);
+			sets.Add (newSet);
+		}
+
+		/* Performs the union of the sets containing x and y, if x and y are not already in the same set. */
+		public void Union (T x, T y) {
+			List<T> xList = Find (x);
+			List<T> yList = Find (y);
+
+			if (xList != yList) {
+				foreach (T element in yList)
+					xList.Add (element);
+				sets.Remove (yList);
+			}
+		}
+
+		/* Returns the set containing the element, or null if the element is not in a set. */
+		public List<T> Find (T element) {
+			foreach (List<T> s in sets) {
+				if (s.Contains(element))
+					return s;
+			}
+			return null;
+		}
+
+		/* Returns the sets. */
+		public List<List<T>> GetSets () {
+			return sets;
+		}
+
+		/* Returns the number of sets. */ 
+		public int NumberOfSets () {
+			return sets.Count;
+		}
 	}
 }
