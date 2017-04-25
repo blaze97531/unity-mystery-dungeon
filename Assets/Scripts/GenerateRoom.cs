@@ -98,11 +98,11 @@ public class GenerateRoom : MonoBehaviour {
 			cumulative_delta_zs[0] = 0;
 
 			for (int i = 0; i < n_x; i++) {
-				delta_xs[i] = Random.Range(10, 20);
+				delta_xs[i] = Random.Range(10, 15);
 				cumulative_delta_xs[i+1] = delta_xs[i] + cumulative_delta_xs[i];
 			}
 			for (int i = 0; i < n_z; i++) {
-				delta_zs[i] = Random.Range(10, 20);
+				delta_zs[i] = Random.Range(10, 15);
 				cumulative_delta_zs[i+1] = delta_zs[i] + cumulative_delta_zs[i];
 			}
 
@@ -141,9 +141,11 @@ public class GenerateRoom : MonoBehaviour {
 				}
 			}
 			// Each set within the unionFind structure now represents a room.
-			// TODO: Now, need to get the rooms, and do something with that information.
+			// Copy the current state of the unionFind structure; this copy should not be modified further.
+			UnionFind<Cell> rooms = unionFind.Copy();
 
-
+			// Probability of adding an unncessary door (a door that connects two sections that are already connected).
+			float probUnnecessaryDoor = 0.25f; 
 			// Join the rooms by adding doors. Enough doors have been added once the entire structure is a single set.
 			while (unionFind.NumberOfSets() > 1) {
 				// Attempt to randomly replace a wall with a door.
@@ -151,10 +153,11 @@ public class GenerateRoom : MonoBehaviour {
 				int z = Random.Range(0, n_z);
 				Direction dir = RandomDirection();
 
-				if (dir == Direction.X && x + 1 < n_x && cells[x,z].pos_x_edge == CellEdge.WALL) {
+				// However, don't replace a wall with a door if the two cells are already in the same room.
+				if (dir == Direction.X && x + 1 < n_x && !rooms.InSameSet(cells[x,z], cells[x+1,z]) && cells[x,z].pos_x_edge == CellEdge.WALL && (!unionFind.InSameSet(cells[x,z], cells[x+1,z]) || Random.value <= probUnnecessaryDoor)) {
 					cells[x,z].pos_x_edge = CellEdge.DOOR;
 					unionFind.Union(cells[x,z], cells[x+1,z]);
-				} else if (dir == Direction.Z && z + 1 < n_z && cells[x,z].pos_z_edge == CellEdge.WALL) {
+				} else if (dir == Direction.Z && z + 1 < n_z && !rooms.InSameSet(cells[x,z], cells[x,z+1]) && cells[x,z].pos_z_edge == CellEdge.WALL && (!unionFind.InSameSet(cells[x,z], cells[x,z+1]) || Random.value <= probUnnecessaryDoor)) {
 					cells[x,z].pos_z_edge = CellEdge.DOOR;
 					unionFind.Union(cells[x,z], cells[x,z+1]);
 				}
@@ -214,7 +217,15 @@ public class GenerateRoom : MonoBehaviour {
 	}
 
 	private void CreateDoor (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
-		// TODO
+		// TODO Need an actual door object.
+		float DOOR_WIDTH = 2.5f;
+		if (longEdge == Direction.X) {
+			CreateWall(x_position - (longEdgeLength + DOOR_WIDTH) / 4.0f, z_position, Direction.X, (longEdgeLength - DOOR_WIDTH) / 2.0f);
+			CreateWall(x_position + (longEdgeLength + DOOR_WIDTH) / 4.0f, z_position, Direction.X, (longEdgeLength - DOOR_WIDTH) / 2.0f);
+		} else {
+			CreateWall(x_position, z_position - (longEdgeLength + DOOR_WIDTH) / 4.0f, Direction.Z, (longEdgeLength - DOOR_WIDTH) / 2.0f);
+			CreateWall(x_position, z_position + (longEdgeLength + DOOR_WIDTH) / 4.0f, Direction.Z, (longEdgeLength - DOOR_WIDTH) / 2.0f);
+		}
 	}
 
 	// Very poorly optimized implementation of the UnionFind data structure
@@ -232,7 +243,7 @@ public class GenerateRoom : MonoBehaviour {
 			sets.Add (newSet);
 		}
 
-		/* Performs the union of the sets containing x and y, if x and y are not already in the same set. */
+		/* Performs the union of the sets containing x and y, if x and y are not already in the same set. If x and y are in the same set, nothing happens. */
 		public void Union (T x, T y) {
 			List<T> xList = Find (x);
 			List<T> yList = Find (y);
@@ -253,6 +264,11 @@ public class GenerateRoom : MonoBehaviour {
 			return null;
 		}
 
+		/* Returns true if x and y are in the same set. */
+		public bool InSameSet (T x, T y) {
+			return Find (x) == Find (y);
+		}
+
 		/* Returns the sets. */
 		public List<List<T>> GetSets () {
 			return sets;
@@ -261,6 +277,16 @@ public class GenerateRoom : MonoBehaviour {
 		/* Returns the number of sets. */ 
 		public int NumberOfSets () {
 			return sets.Count;
+		}
+
+		/* Returns a deep copy of this structure. */
+		public UnionFind<T> Copy () {
+			UnionFind<T> clone = new UnionFind<T> ();
+			foreach (List<T> set in sets) {
+				List<T> clonedSet = new List<T> (set);
+				clone.sets.Add (clonedSet);
+			}
+			return clone;
 		}
 	}
 }
