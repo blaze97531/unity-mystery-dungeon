@@ -13,14 +13,10 @@ public class EnemyWeapon : MonoBehaviour {
 	}
 		
 	public virtual void fire(float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, Vector3 position, Vector3 direction){ 
-		currTime = currTime + Time.deltaTime;
-		if (currTime >= bulletDelay) {
-			GameObject bul = (GameObject)Instantiate (bullet, position, Quaternion.identity); 
-			bul.transform.localScale = bul.transform.localScale * bulletSize;
-			bul.GetComponent<EnemyBulletScript> ().setDamage (bulletDamage);
-			Rigidbody rb = bul.GetComponent<Rigidbody> ();
-			rb.AddForce (direction * bulletSpeed);
-			currTime = 0;
-		}
+		GameObject bul = (GameObject)Instantiate (bullet, position, Quaternion.identity); 
+		bul.transform.localScale = bul.transform.localScale * bulletSize;
+		bul.GetComponent<EnemyBulletScript> ().setDamage (bulletDamage);
+		Rigidbody rb = bul.GetComponent<Rigidbody> ();
+		rb.AddForce (direction * bulletSpeed);
 	}
 }

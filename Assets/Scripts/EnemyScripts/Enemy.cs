@@ -17,11 +17,10 @@ public class Enemy : MonoBehaviour {
 	public float knockBackResistance;
 	public float MAX_HEALTH;
 	public float current_health;
+	public Vector3 forwardsVelocity;
 
-	protected float knockBackDuration;
 	protected Vector3 knockBackDirection;
 	void Start () {
-		knockBackDuration = 0;
 		current_health = MAX_HEALTH;
 		player = GameObject.Find ("Player");
 	}
@@ -34,8 +33,8 @@ public class Enemy : MonoBehaviour {
 			Destroy (other.gameObject);
 			inflictDamage (damageInflicted);
 
-			knockBackDirection = transform.worldToLocalMatrix * (bulletKnockBack/knockBackResistance * direction);
-			knockBackDuration = Time.time + 0.1f;
+			knockBackDirection = transform.worldToLocalMatrix * direction;
+			forwardsVelocity = forwardsVelocity + knockBackDirection * bulletKnockBack/knockBackResistance;
 		}
 	}
 

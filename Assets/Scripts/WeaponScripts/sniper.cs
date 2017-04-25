@@ -9,7 +9,7 @@ public class sniper : Weapon {
 		bullet = Resources.Load("Prefab/Bullet");
 	}
 		
-	public override void fire(float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
-		base.fire (bulletDelay*3, bulletSpeed * 2, bulletDamage*5, bulletSize,bulletKnockBack*2, position);
+	public override void fire(Vector3 velocity, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
+		base.fire (velocity, bulletDelay*3, bulletSpeed * 2, bulletDamage*5, bulletSize,bulletKnockBack*2, position);
 	}
 }

@@ -9,11 +9,11 @@ public class dual : Weapon {
 		bullet = Resources.Load("Prefab/Bullet");
 	}
 
-	public override void fire(float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
+	public override void fire(Vector3 velocity, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
 		bulletDelay = bulletDelay * 1.5f;
 		currTime = currTime + Time.fixedDeltaTime;
 		if (currTime >= bulletDelay	&& (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow) || Input.GetKey (KeyCode.RightArrow) || Input.GetKey (KeyCode.LeftArrow))) {
-			Vector3 direction = base.getDirection ();
+			Vector3 direction =  getDirection();
 			Vector3 pos = position;
 			for (float i = -0.25f; i <= 0.25f; i = i + 0.5f) { 
 				if (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow)) {
@@ -30,7 +30,7 @@ public class dual : Weapon {
 				Rigidbody rb = bul.GetComponent<Rigidbody> ();
 				rb.AddForce (direction * bulletSpeed);
 			}
+			currTime = 0;
 		}
-		currTime = 0;
 	}
 }

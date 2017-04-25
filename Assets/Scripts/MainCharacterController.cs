@@ -10,44 +10,53 @@ public class MainCharacterController : MonoBehaviour {
 	public float bulletDelay = 0.5f; //at 0, the gun fires every frame
 	public float bulletDamage = 5f;
 	public float invincibilityTime = 1;
+	public Vector3 velocity;
+
 	private float invincibleTime;
 	public Weapon weapon;
 
 	public float maxHealth = 10;
 	public float currentHealth;
 
+
 	// Use this for initialization
 	void Start () {
 		currentHealth = maxHealth;
+		velocity = Vector3.zero;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (Input.GetKey (KeyCode.W)) {
-			transform.Translate (Time.deltaTime * movementSpeed * Vector3.forward);
-		}
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.forward * Time.deltaTime * 60, movementSpeed);
+		} 
 		if (Input.GetKey (KeyCode.S)) {
-			transform.Translate (Time.deltaTime * movementSpeed * Vector3.back);
-		}
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.back * Time.deltaTime * 60, movementSpeed);
+		} 
 		if (Input.GetKey (KeyCode.A)) {
-			transform.Translate (Time.deltaTime * movementSpeed * Vector3.left);
-		}
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.left * Time.deltaTime * 60, movementSpeed);
+		} 
 		if (Input.GetKey (KeyCode.D)) {
-			transform.Translate (Time.deltaTime * movementSpeed * Vector3.right);
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.right * Time.deltaTime * 60, movementSpeed);
+		} 
+		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
+			velocity = velocity * Time.deltaTime * 50;
 		}
+		transform.Translate (transform.worldToLocalMatrix * (Time.deltaTime * velocity));
+		weapon.fire ((velocity.magnitude/movementSpeed * 0.3f) *velocity.normalized, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
 	}
-	void FixedUpdate () {
-		MeshRenderer mesh = transform.FindChild ("PlayerModel").GetComponent<MeshRenderer> ();
+
+	void FixedUpdate(){
+		MeshRenderer mesh = transform.GetComponent<MeshRenderer> ();
 		if (Time.time < invincibleTime) {
-			if (mesh.enabled) {
+			if (Time.time % 0.25 < 0.125) {
 				mesh.enabled = false;
-			} else {
+			} else if (Time.time % 0.25 >= 0.125) {
 				mesh.enabled = true;
 			}
 		} else if( Time.time >= invincibleTime && !mesh.enabled){
 			mesh.enabled = true;
 		}
-		weapon.fire (bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
 	}
 	public void OnTriggerEnter (Collider other) {
 		if (other.CompareTag ("EnemyBullet")) {
