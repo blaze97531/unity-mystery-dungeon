@@ -19,8 +19,10 @@ public class Enemy : MonoBehaviour {
 	public float current_health;
 	public Vector3 forwardsVelocity;
 
+	protected Rigidbody rb;
 	protected Vector3 knockBackDirection;
 	void Start () {
+		rb = GetComponent<Rigidbody> ();
 		current_health = MAX_HEALTH;
 		player = GameObject.Find ("Player");
 	}
@@ -30,11 +32,12 @@ public class Enemy : MonoBehaviour {
 			float damageInflicted = other.GetComponent<BulletScript> ().getDamage();
 			float bulletKnockBack = other.GetComponent<BulletScript> ().getKnockBack();
 			Vector3 direction = other.GetComponent<BulletScript> ().getDirection();
+
 			Destroy (other.gameObject);
 			inflictDamage (damageInflicted);
 
-			knockBackDirection = transform.worldToLocalMatrix * direction;
-			forwardsVelocity = forwardsVelocity + knockBackDirection * bulletKnockBack/knockBackResistance;
+			direction.y = 0;
+			forwardsVelocity = forwardsVelocity + direction * bulletKnockBack/knockBackResistance;
 		}
 	}
 
