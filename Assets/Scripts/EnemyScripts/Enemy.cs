@@ -50,28 +50,30 @@ public class Enemy : MonoBehaviour {
 
 	//some useful methods for enemy AIs
 	public bool lookingAtPlayer(){
-		Ray forwards = new Ray (transform.position, transform.forward);
-		RaycastHit[] hits = Physics.RaycastAll (forwards, Vector3.Distance(transform.position, player.transform.position));
-		bool playerHit = false;
-		foreach(RaycastHit h in hits){
-			if (h.collider.gameObject.name.Equals ("PlayerCollider")) {
-				playerHit = true;
-			} else if (h.collider.tag == "Wall") {
-				return false;
-			}
-		}
-
-		return playerHit;
-	}
-
-	public bool canSeePlayer(){
-		Ray forwards = new Ray (transform.position, player.transform.position);
-		RaycastHit[] hits = Physics.RaycastAll (forwards, Vector3.Distance(transform.position, player.transform.position));
-		foreach(RaycastHit h in hits){
-			if (h.collider.gameObject.name.Equals("PlayerCollider")) 
+		if (canSeePlayer()){
+			if (Vector3.Angle (transform.forward, Vector3.Normalize(vectorToPlayer())) < 1)
 				return true;
 		}
 		return false;
+	}
+
+	public bool canSeePlayer(){
+		bool ret = false;
+		Ray direction = new Ray (transform.position, Vector3.Normalize(vectorToPlayer()));
+		RaycastHit[] hits = Physics.RaycastAll (direction, Vector3.Distance(transform.position, player.GetComponent<Transform> ().position));
+		foreach(RaycastHit h in hits){
+			if (h.collider.gameObject.name.Equals("Player")) 
+				ret = true;
+			if (h.collider.gameObject.name.Equals("Wall(Clone)")) 
+				return false;
+		}
+		return ret;
+	}
+
+	//Returns the vector between the player and the enemy
+	public Vector3 vectorToPlayer(){
+		Vector3 ret = player.GetComponent<Transform> ().position - transform.position;
+		return ret;
 	}
 
 	public float getContactDamage(){
