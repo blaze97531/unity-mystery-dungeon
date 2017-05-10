@@ -7,12 +7,14 @@ public class GenerateRoom : MonoBehaviour {
 	private GameObject groundPrefab;
 	private GameObject wallPrefab;
 	private GameObject emptyPrefab;
+	private GameObject singleDoorPrefab;
 
 	// Use this for initialization
 	void Start () {
 		groundPrefab = Resources.Load<GameObject> ("Prefab/Ground");
 		wallPrefab = Resources.Load<GameObject> ("Prefab/Wall");
 		emptyPrefab = Resources.Load<GameObject> ("Prefab/EmptyGameObject");
+		singleDoorPrefab = Resources.Load<GameObject> ("Prefab/SingleDoor");
 
 		Floor floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
@@ -216,15 +218,45 @@ public class GenerateRoom : MonoBehaviour {
 		}
 	}
 
+	/* This function actually spawns a door prefab. It returns the door it spawns. */
+	private GameObject SpawnDoorPrefab (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
+		Vector3 position = new Vector3 (x_position, singleDoorPrefab.transform.position.y, z_position);
+		GameObject door = Instantiate<GameObject> (singleDoorPrefab, position, Quaternion.identity, transform);
+		if (longEdge == Direction.X) {
+			door.transform.localScale = new Vector3 (longEdgeLength, singleDoorPrefab.transform.localScale.y, singleDoorPrefab.transform.localScale.z);
+		} else {
+			door.transform.localScale = new Vector3 (singleDoorPrefab.transform.localScale.x, singleDoorPrefab.transform.localScale.y, longEdgeLength);
+		}
+		return door;
+	}
+
+	/* This function creates the two walls and two single doors that make up the entire section of the wall where there is a door. */
 	private void CreateDoor (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
-		// TODO Need an actual door object.
-		float DOOR_WIDTH = 2.5f;
+		
+		float DOOR_WIDTH = 2.5f; // The width of the entire door opening.
 		if (longEdge == Direction.X) {
 			CreateWall(x_position - (longEdgeLength + DOOR_WIDTH) / 4.0f, z_position, Direction.X, (longEdgeLength - DOOR_WIDTH) / 2.0f);
 			CreateWall(x_position + (longEdgeLength + DOOR_WIDTH) / 4.0f, z_position, Direction.X, (longEdgeLength - DOOR_WIDTH) / 2.0f);
+			GameObject leftDoor = SpawnDoorPrefab (x_position - DOOR_WIDTH / 4.0f, z_position, Direction.X, DOOR_WIDTH / 2.0f);
+			GameObject rightDoor = SpawnDoorPrefab (x_position + DOOR_WIDTH / 4.0f, z_position, Direction.X, DOOR_WIDTH / 2.0f);
+
+			leftDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.NEG_X);
+			rightDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.POS_X);
+
+			// DEBUGGING PURPOSES: Opens all doors.
+			leftDoor.GetComponent<DoorControlScript> ().OpenDoor ();
+			rightDoor.GetComponent<DoorControlScript> ().OpenDoor ();
 		} else {
 			CreateWall(x_position, z_position - (longEdgeLength + DOOR_WIDTH) / 4.0f, Direction.Z, (longEdgeLength - DOOR_WIDTH) / 2.0f);
 			CreateWall(x_position, z_position + (longEdgeLength + DOOR_WIDTH) / 4.0f, Direction.Z, (longEdgeLength - DOOR_WIDTH) / 2.0f);
+			GameObject backwardDoor = SpawnDoorPrefab (x_position, z_position - DOOR_WIDTH / 4.0f, Direction.Z, DOOR_WIDTH / 2.0f);
+			GameObject forwardDoor = SpawnDoorPrefab (x_position, z_position + DOOR_WIDTH / 4.0f, Direction.Z, DOOR_WIDTH / 2.0f);
+
+			backwardDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.NEG_Z);
+			forwardDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.POS_Z);
+			// DEBUGGING PURPOSES: Opens all doors.
+			backwardDoor.GetComponent<DoorControlScript> ().OpenDoor();
+			forwardDoor.GetComponent<DoorControlScript> ().OpenDoor ();
 		}
 	}
 
