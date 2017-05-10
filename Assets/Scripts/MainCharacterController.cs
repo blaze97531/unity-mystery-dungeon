@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class MainCharacterController : MonoBehaviour {
+	public float maxHealth = 10;
+	public float currentHealth;
+
 	public float movementSpeed = 7.5f;
 	public float bulletSpeed = 500.0f;
 	public float bulletKnockBack= 1;
@@ -10,19 +13,19 @@ public class MainCharacterController : MonoBehaviour {
 	public float bulletDelay = 0.5f; //at 0, the gun fires every frame
 	public float bulletDamage = 5f;
 	public float invincibilityTime = 1;
-	public Vector3 velocity;
-
-	private float invincibleTime;
 	public Weapon weapon;
 
-	public float maxHealth = 10;
-	public float currentHealth;
+	public Vector3 velocity;
+	public Vector3 closestPoint;
 
+	private float invincibleTime;
+
+	private Rigidbody rb;
 
 	// Use this for initialization
 	void Start () {
+		rb = GetComponent<Rigidbody> ();
 		currentHealth = maxHealth;
-		velocity = Vector3.zero;
 	}
 	
 	// Update is called once per frame
@@ -42,7 +45,7 @@ public class MainCharacterController : MonoBehaviour {
 		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
 			velocity = velocity * Time.deltaTime * 50;
 		}
-		transform.Translate (transform.worldToLocalMatrix * (Time.deltaTime * velocity));
+		rb.MovePosition(transform.position + Time.deltaTime * velocity);
 		weapon.fire ((velocity.magnitude/movementSpeed * 0.3f) *velocity.normalized, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
 	}
 
@@ -58,6 +61,7 @@ public class MainCharacterController : MonoBehaviour {
 			mesh.enabled = true;
 		}
 	}
+
 	public void OnTriggerEnter (Collider other) {
 		if (other.CompareTag ("EnemyBullet")) {
 			float damageInflicted = other.GetComponent<EnemyBulletScript> ().getDamage();
@@ -65,8 +69,10 @@ public class MainCharacterController : MonoBehaviour {
 			if(Time.time >= invincibleTime) //player gets invicibility for a short time when he gets hit
 				inflictDamage (damageInflicted);
 		}
-		if (other.CompareTag ("Enemy")) {
-			float damageInflicted = other.GetComponent<Enemy> ().getContactDamage();
+	}
+	public void OnCollisionStay (Collision other) {
+		if (other.collider.CompareTag ("Enemy")) {
+			float damageInflicted = other.collider.GetComponent<Enemy> ().getContactDamage();
 			if(Time.time >= invincibleTime) 
 				inflictDamage (damageInflicted);
 		}
