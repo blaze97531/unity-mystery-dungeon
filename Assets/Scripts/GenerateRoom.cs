@@ -52,6 +52,35 @@ public class GenerateRoom : MonoBehaviour {
 		public CellEdge pos_z_edge;
 	}
 
+	private class Room {
+		// The grid cells of the floor that comprise this room
+		public List<Cell> cells; 
+		// All the doors leading in and out of this room. Note: 
+		// individual doors will appear in TWO different rooms
+		public List<GameObject> doors;
+
+		public Room (List<Cell> cells) {
+			this.cells = cells;
+			this.doors = new List<GameObject>();
+		}
+
+		public void AddDoor (GameObject door) {
+			this.doors.Add (door);
+		}
+
+		public void OpenAllDoors () {
+			foreach (GameObject door in doors) {
+				door.GetComponent<DoorControlScript> ().OpenDoor ();
+			}
+		}
+
+		public void CloseAllDoors () {
+			foreach (GameObject door in doors) {
+				door.GetComponent<DoorControlScript> ().CloseDoor ();
+			}
+		}
+	}
+
 	private class Floor {
 		private GenerateRoom enclosingInstance;
 		private Cell[,] cells;
@@ -63,7 +92,13 @@ public class GenerateRoom : MonoBehaviour {
 		private int[] cumulative_delta_xs; 
 		private int[] cumulative_delta_zs;
 
+		// UnionFind structure where each set is all cells that make up one room.
+		private UnionFind<Cell> rooms;
+		// List<Cells> in a room --> Room object for that room
+		private Dictionary<List<Cell>, Room> cellsToRooms;
+
 		public Floor (GenerateRoom enclosingInstance, int n_x, int n_z) {
+			this.cellsToRooms = new Dictionary<List<Cell>, Room>();
 			this.enclosingInstance = enclosingInstance;
 			this.n_x = n_x;
 			this.n_z = n_z;
@@ -144,7 +179,10 @@ public class GenerateRoom : MonoBehaviour {
 			}
 			// Each set within the unionFind structure now represents a room.
 			// Copy the current state of the unionFind structure; this copy should not be modified further.
-			UnionFind<Cell> rooms = unionFind.Copy();
+			rooms = unionFind.Copy();
+			foreach (List<Cell> cellList in rooms.GetSets()) {
+				cellsToRooms.Add(cellList, new Room(cellList));
+			}
 
 			// Probability of adding an unncessary door (a door that connects two sections that are already connected).
 			float probUnnecessaryDoor = 0.25f; 
@@ -179,13 +217,15 @@ public class GenerateRoom : MonoBehaviour {
 					if (cells [i, j].pos_x_edge == CellEdge.WALL) {
 						enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i], cumulative_delta_zs [j] + delta_zs [j] / 2.0f, Direction.Z, delta_zs [j]);
 					} else if (cells [i, j].pos_x_edge == CellEdge.DOOR) {
-						enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i], cumulative_delta_zs [j] + delta_zs [j] / 2.0f, Direction.Z, delta_zs [j]);
+						GameObject[] doors = enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i], cumulative_delta_zs [j] + delta_zs [j] / 2.0f, Direction.Z, delta_zs [j]);
+						AddDoorsToRooms (doors, cells [i, j], cells [i + 1, j]);
 					}
 
 					if (cells [i, j].pos_z_edge == CellEdge.WALL) {
 						enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, cumulative_delta_zs [j] + delta_zs [j], Direction.X, delta_xs [i]);
 					} else if (cells [i, j].pos_z_edge == CellEdge.DOOR) {
-						enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, cumulative_delta_zs [j] + delta_zs [j], Direction.X, delta_xs [i]);
+						GameObject[] doors = enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, cumulative_delta_zs [j] + delta_zs [j], Direction.X, delta_xs [i]);
+						AddDoorsToRooms (doors, cells [i, j], cells [i, j+1]);
 					}
 				}
 			}
@@ -194,7 +234,8 @@ public class GenerateRoom : MonoBehaviour {
 				if (negative_x_border [i] == CellEdge.WALL) {
 					enclosingInstance.CreateWall (0.0f, cumulative_delta_zs [i] + delta_zs [i] / 2.0f, Direction.Z, delta_zs [i]);
 				} else if (negative_x_border [i] == CellEdge.DOOR) {
-					enclosingInstance.CreateDoor (0.0f, cumulative_delta_zs [i] + delta_zs [i] / 2.0f, Direction.Z, delta_zs [i]);
+					GameObject[] doors = enclosingInstance.CreateDoor (0.0f, cumulative_delta_zs [i] + delta_zs [i] / 2.0f, Direction.Z, delta_zs [i]);
+					// TODO: will need to add the doors to the Room objects, although this code cannot currently be executed.
 				}
 			}
 
@@ -202,11 +243,28 @@ public class GenerateRoom : MonoBehaviour {
 				if (negative_z_border [i] == CellEdge.WALL) {
 					enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, 0.0f, Direction.X, delta_xs [i]);
 				} else if (negative_z_border [i] == CellEdge.DOOR) {
-					enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, 0.0f, Direction.X, delta_xs [i]);
+					GameObject[] doors = enclosingInstance.CreateDoor (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, 0.0f, Direction.X, delta_xs [i]);
+					// TODO: will need to add the doors to the Room objects, although this code cannot currently be executed.
 				}
 			}
+
+			/* DEBUGGING Purposes: Open all doors on the floor */
+			foreach (Room r in cellsToRooms.Values) {
+				r.OpenAllDoors ();
+			}
 		}
-	}
+
+		private void AddDoorsToRooms(GameObject[] doorsToAdd, Cell cellInRoom1, Cell cellInRoom2) {
+			Room room1, room2;
+			cellsToRooms.TryGetValue (rooms.Find (cellInRoom1), out room1);
+			cellsToRooms.TryGetValue (rooms.Find (cellInRoom2), out room2);
+
+			foreach (GameObject door in doorsToAdd) {
+				room1.AddDoor (door);
+				room2.AddDoor (door);
+			}
+		}
+	} // End Floor class
 
 	private void CreateWall (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
 		Vector3 position = new Vector3 (x_position, wallPrefab.transform.position.y, z_position);
@@ -230,8 +288,9 @@ public class GenerateRoom : MonoBehaviour {
 		return door;
 	}
 
-	/* This function creates the two walls and two single doors that make up the entire section of the wall where there is a door. */
-	private void CreateDoor (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
+	/* This function creates the two walls and two single doors that make up the entire section of the wall where there is a door. 
+	 * It returns an array of the two single door objects that where created. */
+	private GameObject[] CreateDoor (float x_position, float z_position, Direction longEdge, float longEdgeLength) {
 		
 		float DOOR_WIDTH = 2.5f; // The width of the entire door opening.
 		if (longEdge == Direction.X) {
@@ -243,9 +302,7 @@ public class GenerateRoom : MonoBehaviour {
 			leftDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.NEG_X);
 			rightDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.POS_X);
 
-			// DEBUGGING PURPOSES: Opens all doors.
-			leftDoor.GetComponent<DoorControlScript> ().OpenDoor ();
-			rightDoor.GetComponent<DoorControlScript> ().OpenDoor ();
+			return new GameObject[] { leftDoor, rightDoor };
 		} else {
 			CreateWall(x_position, z_position - (longEdgeLength + DOOR_WIDTH) / 4.0f, Direction.Z, (longEdgeLength - DOOR_WIDTH) / 2.0f);
 			CreateWall(x_position, z_position + (longEdgeLength + DOOR_WIDTH) / 4.0f, Direction.Z, (longEdgeLength - DOOR_WIDTH) / 2.0f);
@@ -254,9 +311,8 @@ public class GenerateRoom : MonoBehaviour {
 
 			backwardDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.NEG_Z);
 			forwardDoor.GetComponent<DoorControlScript> ().SetOpeningAxis (DoorControlScript.OpenDirection.POS_Z);
-			// DEBUGGING PURPOSES: Opens all doors.
-			backwardDoor.GetComponent<DoorControlScript> ().OpenDoor();
-			forwardDoor.GetComponent<DoorControlScript> ().OpenDoor ();
+
+			return new GameObject[] { backwardDoor, forwardDoor };
 		}
 	}
 
