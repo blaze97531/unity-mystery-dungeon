@@ -11,7 +11,7 @@ public class dual : Weapon {
 
 	public override void fire(Vector3 velocity, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
 		bulletDelay = bulletDelay * 1.5f;
-		currTime = currTime + Time.fixedDeltaTime;
+		currTime = currTime + Time.deltaTime;
 		if (currTime >= bulletDelay	&& (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow) || Input.GetKey (KeyCode.RightArrow) || Input.GetKey (KeyCode.LeftArrow))) {
 			Vector3 direction =  getDirection();
 			Vector3 pos = position;

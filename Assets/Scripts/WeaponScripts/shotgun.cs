@@ -12,7 +12,7 @@ public class shotgun : Weapon {
 	public override void fire(Vector3 velocity, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack, Vector3 position){
 		bulletDelay = bulletDelay * 3;
 		Vector3 direction = getDirection () + velocity;
-		currTime = currTime + Time.fixedDeltaTime;
+		currTime = currTime + Time.deltaTime;
 		if (currTime >= bulletDelay	&& (Input.GetKey (KeyCode.UpArrow) || Input.GetKey (KeyCode.DownArrow) || Input.GetKey (KeyCode.RightArrow) || Input.GetKey (KeyCode.LeftArrow))) {
 			for (int i = -2; i <= 2; i++) { //essentially fires 5 bullets in an arch
 				GameObject bul = (GameObject)Instantiate (bullet, position + getGunLocationOffset (), Quaternion.identity);
