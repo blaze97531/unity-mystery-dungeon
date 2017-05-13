@@ -59,20 +59,12 @@ public class DoorControlScript : MonoBehaviour {
 
 	// Initiates the process of opening the door. 
 	public void OpenDoor () {
-		if (opening_direction != null) {
-			state = DoorState.OPENING;
-		} else {
-			Debug.Log ("OpenDoor() called before opening_direction was set.");
-		}
+		state = DoorState.OPENING;
 	}
 
 	// Initiates the process of closing the door.
 	public void CloseDoor () {
-		if (opening_direction != null) {
-			state = DoorState.CLOSING;
-		} else {
-			Debug.Log ("CloseDoor() called before opening_direction was set.");
-		}
+		state = DoorState.CLOSING;
 	}
 
 	private static Vector3 GetDirectionVector (OpenDirection d) {

@@ -6,12 +6,14 @@ public class GenerateRoom : MonoBehaviour {
 
 	private GameObject groundPrefab;
 	private GameObject wallPrefab;
+	private GameObject fogPrefab;
 	private GameObject emptyPrefab;
 	private GameObject singleDoorPrefab;
 
 	private GameObject[] enemyPrefabs;
 	private GameObject[] obstaclePrefabs;
 
+	private Floor floor;
 	private GameObject player;
 
 	// Use this for initialization
@@ -20,18 +22,24 @@ public class GenerateRoom : MonoBehaviour {
 		wallPrefab = Resources.Load<GameObject> ("Prefab/Wall");
 		emptyPrefab = Resources.Load<GameObject> ("Prefab/EmptyGameObject");
 		singleDoorPrefab = Resources.Load<GameObject> ("Prefab/SingleDoor");
+		fogPrefab = Resources.Load<GameObject> ("Prefab/Fog");
 
 		enemyPrefabs = Resources.LoadAll<GameObject> ("Prefab/Enemies");
 		obstaclePrefabs = Resources.LoadAll<GameObject> ("Prefab/Obstacles");
 
-		Floor floor = new Floor(this, 10, 10);
+		floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
 
 		player = GameObject.Find ("Player");
 	}
 
 	void Update () {
-		
+		Room currentRoom = floor.GetRoomContaining (player.transform.position);
+		currentRoom.ClearFog ();
+		currentRoom.SpawnEnemies ();
+		if (currentRoom.CheckIfCleared ()) {
+			currentRoom.OpenAllDoors ();
+		}
 	}
 		
 	private enum CellEdge {
@@ -72,24 +80,31 @@ public class GenerateRoom : MonoBehaviour {
 
 		// All the doors leading in and out of this room. Note: 
 		// individual doors will appear in TWO different rooms
-		public List<GameObject> doors;
+		private List<GameObject> doors;
+		private List<GameObject> fog; 
 
-		public List<GameObject> enemiesToSpawn;
-		public List<Vector3> spawnPositions;
+		private List<GameObject> enemiesToSpawn;
+		private List<Vector3> spawnPositions;
 
-		public List<GameObject> activeEnemies;
-		public bool cleared;
+		private List<GameObject> aliveEnemies;
+		private bool cleared;
 
 		public Room (List<Cell> cells) {
 			this.cells = cells;
 			this.doors = new List<GameObject>();
-			enemiesToSpawn = new List<GameObject>();
-			spawnPositions = new List<Vector3>();
-			cleared = false;
+			this.fog = new List<GameObject>();
+			this.enemiesToSpawn = new List<GameObject>();
+			this.spawnPositions = new List<Vector3>();
+			this.aliveEnemies = new List<GameObject> ();
+			this.cleared = false;
 		}
 
 		public void AddDoor (GameObject door) {
 			this.doors.Add (door);
+		}
+
+		public void AddFogObject (GameObject fog) {
+			this.fog.Add(fog);
 		}
 
 		public void AddEnemyToSpawn (GameObject enemy, Vector3 spawnPosition) {
@@ -101,7 +116,6 @@ public class GenerateRoom : MonoBehaviour {
 			foreach (GameObject door in doors) {
 				door.GetComponent<DoorControlScript> ().OpenDoor ();
 			}
-			SpawnEnemies ();
 		}
 
 		public void CloseAllDoors () {
@@ -110,14 +124,35 @@ public class GenerateRoom : MonoBehaviour {
 			}
 		}
 
-		private void SpawnEnemies () {
+		public void SpawnEnemies () {
 			for (int i = 0; i < enemiesToSpawn.Count; i++) {
-				GameObject newEnemy = Instantiate<GameObject> (enemiesToSpawn [i], spawnPositions [i], Quaternion.identity);
+				if (CanSpawnObjectAt (enemiesToSpawn [i], spawnPositions [i])) {
+					GameObject newEnemy = Instantiate<GameObject> (enemiesToSpawn [i], spawnPositions [i], Quaternion.identity);
+					aliveEnemies.Add (newEnemy);
+				}
 			}
 			enemiesToSpawn.Clear ();
 			spawnPositions.Clear ();
 		}
-			
+
+		public bool CheckIfCleared () {
+			aliveEnemies.RemoveAll (IsNull);
+			if (!cleared && aliveEnemies.Count == 0) {
+				cleared = true;
+			}
+			return cleared;
+		}
+
+		public void ClearFog () {
+			foreach (GameObject f in fog) {
+				Destroy (f);
+			}
+			fog.Clear ();
+		}
+
+		private static bool IsNull (Object o) {
+			return o == null;
+		}
 	}
 
 	private class Floor {
@@ -253,6 +288,12 @@ public class GenerateRoom : MonoBehaviour {
 
 			for (int i = 0; i < n_x; i++) {
 				for (int j = 0; j < n_z; j++) {
+
+					Room r;
+					GameObject fogObject = enclosingInstance.CreateFog (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, cumulative_delta_zs [j] + delta_zs [j] / 2.0f, delta_xs [i], delta_zs [j]);
+					cellsToRooms.TryGetValue(rooms.Find(cells [i, j]), out r);
+					r.AddFogObject (fogObject);
+
 					if (cells [i, j].pos_x_edge == CellEdge.WALL) {
 						enclosingInstance.CreateWall (cumulative_delta_xs [i] + delta_xs [i], cumulative_delta_zs [j] + delta_zs [j] / 2.0f, Direction.Z, delta_zs [j]);
 					} else if (cells [i, j].pos_x_edge == CellEdge.DOOR) {
@@ -293,7 +334,7 @@ public class GenerateRoom : MonoBehaviour {
 					cellsToRooms.TryGetValue (rooms.Find(cells[i,j]), out r);
 
 					int obstacles_to_spawn = Random.Range(1,5);
-					int enemies_to_spawn = Random.Range(0,3);
+					int enemies_to_spawn = Random.Range(1,3);
 
 					const int GIVE_UP_THRESHOLD = 100; // Avoid infinite loops if nothing can be spawned.
 
@@ -325,11 +366,6 @@ public class GenerateRoom : MonoBehaviour {
 					}
 				}
 			}
-
-			/* DEBUGGING Purposes: Open all doors on the floor */
-			foreach (Room r in cellsToRooms.Values) {
-				r.OpenAllDoors ();
-			}
 		}
 
 		private void AddDoorsToRooms(GameObject[] doorsToAdd, Cell cellInRoom1, Cell cellInRoom2) {
@@ -343,6 +379,11 @@ public class GenerateRoom : MonoBehaviour {
 			}
 		}
 
+		public Room GetRoomContaining(Vector3 position) {
+			Room room;
+			cellsToRooms.TryGetValue (rooms.Find(GetCellContaining (position.x, position.z)), out room);
+			return room;
+		}
 
 		/* Returns the cell that contains the given (x,z) position. Returns null if the position is out of bounds of the floor. */
 		private Cell GetCellContaining(float x, float z) {
@@ -410,6 +451,14 @@ public class GenerateRoom : MonoBehaviour {
 
 			return new GameObject[] { backwardDoor, forwardDoor };
 		}
+	}
+
+	/* Creates a fog object (over a cell). Returns the game object it creates. */
+	private GameObject CreateFog (float x_position, float z_position, float x_size, float z_size) {
+		// The + 0.01f to the y-position prevents some weird graphical glitch.
+		GameObject fog = Instantiate<GameObject> (fogPrefab, new Vector3 (x_position, wallPrefab.transform.localScale.y + 0.01f, z_position), Quaternion.Euler(new Vector3(90.0f, 0.0f, 0.0f)));		
+		fog.transform.localScale = new Vector3 (x_size, z_size, 1.0f);
+		return fog;
 	}
 
 	private static bool CanSpawnObjectAt (GameObject spawn, Vector3 spawnPosition) {
