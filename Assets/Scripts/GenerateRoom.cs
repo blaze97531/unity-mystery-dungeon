@@ -346,7 +346,7 @@ public class GenerateRoom : MonoBehaviour {
 						Quaternion spawnOrientation = Quaternion.Euler (new Vector3 (0.0f, Random.Range (0.0f, 360.0f), 0.0f));
 
 						if (CanSpawnObjectAt(obstacleToSpawn, spawnPosition, spawnOrientation)) {
-							Instantiate<GameObject> (obstacleToSpawn, spawnPosition, spawnOrientation);
+							Instantiate<GameObject> (obstacleToSpawn, spawnPosition, spawnOrientation, enclosingInstance.transform);
 							obstacles_to_spawn--;
 						}
 						spawn_attempts++;
@@ -456,7 +456,7 @@ public class GenerateRoom : MonoBehaviour {
 	/* Creates a fog object (over a cell). Returns the game object it creates. */
 	private GameObject CreateFog (float x_position, float z_position, float x_size, float z_size) {
 		// The + 0.01f to the y-position prevents some weird graphical glitch.
-		GameObject fog = Instantiate<GameObject> (fogPrefab, new Vector3 (x_position, wallPrefab.transform.localScale.y + 0.01f, z_position), Quaternion.Euler(new Vector3(90.0f, 0.0f, 0.0f)));		
+		GameObject fog = Instantiate<GameObject> (fogPrefab, new Vector3 (x_position, wallPrefab.transform.localScale.y + 0.01f, z_position), Quaternion.Euler(new Vector3(90.0f, 0.0f, 0.0f)), transform);		
 		fog.transform.localScale = new Vector3 (x_size, z_size, 1.0f);
 		return fog;
 	}
