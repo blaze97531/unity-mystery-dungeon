@@ -64,7 +64,7 @@ public class Enemy : MonoBehaviour {
 		foreach(RaycastHit h in hits){
 			if (h.collider.gameObject.name.Equals("Player")) 
 				ret = true;
-			if (h.collider.gameObject.name.Equals("Wall(Clone)")) 
+			if (h.collider.gameObject.tag.Equals("Wall") )
 				return false;
 		}
 		return ret;
