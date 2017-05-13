@@ -50,8 +50,6 @@ public class LocalNavMeshBuilder : MonoBehaviour
 	void UpdateNavMesh(bool asyncUpdate = false)
 	{
 		NavMeshSourceTag.Collect(ref m_Sources);
-		Debug.Log (m_Sources.Count);
-		Debug.Log (asyncUpdate);
 		var defaultBuildSettings = NavMesh.GetSettingsByID(0);
 		var bounds = QuantizedBounds();
 

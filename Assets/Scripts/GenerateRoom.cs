@@ -292,23 +292,36 @@ public class GenerateRoom : MonoBehaviour {
 					Room r;
 					cellsToRooms.TryGetValue (rooms.Find(cells[i,j]), out r);
 
-					int enemies_to_spawn = Random.Range(0, 3);
-					for (int k = enemies_to_spawn; k > 0; k--) {
+					int obstacles_to_spawn = Random.Range(1,5);
+					int enemies_to_spawn = Random.Range(0,3);
+
+					const int GIVE_UP_THRESHOLD = 100; // Avoid infinite loops if nothing can be spawned.
+
+					int spawn_attempts = 0;
+					while (obstacles_to_spawn > 0 && spawn_attempts < GIVE_UP_THRESHOLD) {
+						GameObject obstacleToSpawn = enclosingInstance.obstaclePrefabs [Random.Range (0, enclosingInstance.obstaclePrefabs.Length)];
+
+						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range (0.0f, delta_xs [i]), obstacleToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range (0.0f, delta_zs [j]));
+						Quaternion spawnOrientation = Quaternion.Euler (new Vector3 (0.0f, Random.Range (0.0f, 360.0f), 0.0f));
+
+						if (CanSpawnObjectAt(obstacleToSpawn, spawnPosition, spawnOrientation)) {
+							Instantiate<GameObject> (obstacleToSpawn, spawnPosition, spawnOrientation);
+							obstacles_to_spawn--;
+						}
+						spawn_attempts++;
+					}
+
+					spawn_attempts = 0;
+					while (enemies_to_spawn > 0 && spawn_attempts < GIVE_UP_THRESHOLD) {
 						GameObject enemyToSpawn = enclosingInstance.enemyPrefabs [Random.Range (0, enclosingInstance.enemyPrefabs.Length)];
 
 						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range(0.0f, delta_xs[i]), enemyToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range(0.0f, delta_zs[j]));
 
-						// TODO: Major problem ensure this doesn't intersect with anything else in the room.
-						r.AddEnemyToSpawn (enemyToSpawn, spawnPosition);
-					}
-
-					int obstacles_to_spawn = 1;
-					for (int k = obstacles_to_spawn; k > 0; k--) {
-						GameObject obstacleToSpawn = enclosingInstance.obstaclePrefabs [Random.Range (0, enclosingInstance.obstaclePrefabs.Length)];
-
-						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range (0.0f, delta_xs [i]), obstacleToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range (0.0f, delta_zs [j]));
-
-						r.AddEnemyToSpawn (obstacleToSpawn, spawnPosition);
+						if (CanSpawnObjectAt(enemyToSpawn, spawnPosition)) {
+							r.AddEnemyToSpawn (enemyToSpawn, spawnPosition);
+							enemies_to_spawn--;
+						}
+						spawn_attempts++;
 					}
 				}
 			}
@@ -397,6 +410,44 @@ public class GenerateRoom : MonoBehaviour {
 
 			return new GameObject[] { backwardDoor, forwardDoor };
 		}
+	}
+
+	private static bool CanSpawnObjectAt (GameObject spawn, Vector3 spawnPosition) {
+		return CanSpawnObjectAt (spawn, spawnPosition, Quaternion.identity);
+	}
+
+	private static bool CanSpawnObjectAt (GameObject spawn, Vector3 spawnPosition, Quaternion orientation) {
+		// Must check each type of collider individually.
+		// I am using GetComponentInChildren because some of the MMMM assests have colliders in seperate elements.
+
+		const int LAYER_MASK = ~(1 << 8); // Ignores the ground. The ground is set to layer 8.
+		const float BUFFER_WIDTH = 0.5f; // Buffer between the object and any other objects.
+
+		CapsuleCollider capsule = spawn.GetComponentInChildren<CapsuleCollider> ();
+		if (capsule != null) {
+			Vector3 start, end;
+			if (capsule.direction == 0) {
+				start = spawnPosition + (capsule.height - capsule.radius) * Vector3.left;
+				end = spawnPosition + (capsule.height - capsule.radius) * Vector3.right;
+			} else if (capsule.direction == 1) {
+				start = spawnPosition + (capsule.height - capsule.radius) * Vector3.down;
+				end = spawnPosition + (capsule.height - capsule.radius) * Vector3.up;
+			} else if (capsule.direction == 2) {
+				start = spawnPosition + (capsule.height - capsule.radius) * Vector3.back;
+				end = spawnPosition + (capsule.height - capsule.radius) * Vector3.forward;
+			} else {
+				throw new UnityException ("Unexepted capsule direction: " + capsule.direction);
+			}
+			return !Physics.CheckCapsule (start, end, capsule.radius + BUFFER_WIDTH, LAYER_MASK);
+		}
+
+		BoxCollider box = spawn.GetComponentInChildren<BoxCollider> ();
+		if (box != null) {
+			return !Physics.CheckBox (spawnPosition + box.center, box.size / 2.0f + new Vector3(BUFFER_WIDTH, BUFFER_WIDTH, BUFFER_WIDTH), orientation, LAYER_MASK);
+		}
+
+		Debug.Log ("Warning: CanSpawnObject() failed to check the collider of an object");
+		return true;
 	}
 
 	// Very poorly optimized implementation of the UnionFind data structure
