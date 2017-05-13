@@ -9,6 +9,10 @@ public class GenerateRoom : MonoBehaviour {
 	private GameObject emptyPrefab;
 	private GameObject singleDoorPrefab;
 
+	private GameObject[] enemyPrefabs;
+
+	private GameObject player;
+
 	// Use this for initialization
 	void Start () {
 		groundPrefab = Resources.Load<GameObject> ("Prefab/Ground");
@@ -16,8 +20,16 @@ public class GenerateRoom : MonoBehaviour {
 		emptyPrefab = Resources.Load<GameObject> ("Prefab/EmptyGameObject");
 		singleDoorPrefab = Resources.Load<GameObject> ("Prefab/SingleDoor");
 
+		enemyPrefabs = Resources.LoadAll<GameObject> ("Prefab/Enemies");
+
 		Floor floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
+
+		player = GameObject.Find ("Player");
+	}
+
+	void Update () {
+		
 	}
 		
 	private enum CellEdge {
@@ -55,23 +67,39 @@ public class GenerateRoom : MonoBehaviour {
 	private class Room {
 		// The grid cells of the floor that comprise this room
 		public List<Cell> cells; 
+
 		// All the doors leading in and out of this room. Note: 
 		// individual doors will appear in TWO different rooms
 		public List<GameObject> doors;
 
+		public List<GameObject> enemiesToSpawn;
+		public List<Vector3> spawnPositions;
+
+		public List<GameObject> activeEnemies;
+		public bool cleared;
+
 		public Room (List<Cell> cells) {
 			this.cells = cells;
 			this.doors = new List<GameObject>();
+			enemiesToSpawn = new List<GameObject>();
+			spawnPositions = new List<Vector3>();
+			cleared = false;
 		}
 
 		public void AddDoor (GameObject door) {
 			this.doors.Add (door);
 		}
 
+		public void AddEnemyToSpawn (GameObject enemy, Vector3 spawnPosition) {
+			enemiesToSpawn.Add (enemy);
+			spawnPositions.Add (spawnPosition);
+		}
+
 		public void OpenAllDoors () {
 			foreach (GameObject door in doors) {
 				door.GetComponent<DoorControlScript> ().OpenDoor ();
 			}
+			SpawnEnemies ();
 		}
 
 		public void CloseAllDoors () {
@@ -79,6 +107,15 @@ public class GenerateRoom : MonoBehaviour {
 				door.GetComponent<DoorControlScript> ().CloseDoor ();
 			}
 		}
+
+		private void SpawnEnemies () {
+			for (int i = 0; i < enemiesToSpawn.Count; i++) {
+				GameObject newEnemy = Instantiate<GameObject> (enemiesToSpawn [i], spawnPositions [i], Quaternion.identity);
+			}
+			enemiesToSpawn.Clear ();
+			spawnPositions.Clear ();
+		}
+			
 	}
 
 	private class Floor {
@@ -248,6 +285,23 @@ public class GenerateRoom : MonoBehaviour {
 				}
 			}
 
+			for (int i = 0; i < n_x; i++) {
+				for (int j = 0; j < n_z; j++) {
+					Room r;
+					cellsToRooms.TryGetValue (rooms.Find(cells[i,j]), out r);
+
+					int enemies_to_spawn = Random.Range(0, 3);
+					for (int k = enemies_to_spawn; k > 0; k--) {
+						GameObject enemyToSpawn = enclosingInstance.enemyPrefabs [Random.Range (0, enclosingInstance.enemyPrefabs.Length)];
+
+						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range(0.0f, delta_xs[i]), enemyToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range(0.0f, delta_zs[j]));
+
+						// TODO: Major problem ensure this doesn't intersect with anything else in the room.
+						r.AddEnemyToSpawn (enemyToSpawn, spawnPosition);
+					}
+				}
+			}
+
 			/* DEBUGGING Purposes: Open all doors on the floor */
 			foreach (Room r in cellsToRooms.Values) {
 				r.OpenAllDoors ();
@@ -262,6 +316,24 @@ public class GenerateRoom : MonoBehaviour {
 			foreach (GameObject door in doorsToAdd) {
 				room1.AddDoor (door);
 				room2.AddDoor (door);
+			}
+		}
+
+
+		/* Returns the cell that contains the given (x,z) position. Returns null if the position is out of bounds of the floor. */
+		private Cell GetCellContaining(float x, float z) {
+			if (x < 0 || z < 0 || x >= cumulative_delta_xs [n_x] || z >= cumulative_delta_zs [n_z]) {
+				return null;
+			} else {
+				int x_index = 0; 
+				int z_index = 0;
+				while (cumulative_delta_xs [x_index] + delta_xs[x_index] < x) {
+					x_index++;
+				}
+				while (cumulative_delta_zs [z_index] + delta_zs[z_index] < z) {
+					z_index++;
+				}
+				return cells [x_index, z_index];
 			}
 		}
 	} // End Floor class
