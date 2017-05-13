@@ -10,6 +10,7 @@ public class GenerateRoom : MonoBehaviour {
 	private GameObject singleDoorPrefab;
 
 	private GameObject[] enemyPrefabs;
+	private GameObject[] obstaclePrefabs;
 
 	private GameObject player;
 
@@ -21,6 +22,7 @@ public class GenerateRoom : MonoBehaviour {
 		singleDoorPrefab = Resources.Load<GameObject> ("Prefab/SingleDoor");
 
 		enemyPrefabs = Resources.LoadAll<GameObject> ("Prefab/Enemies");
+		obstaclePrefabs = Resources.LoadAll<GameObject> ("Prefab/Obstacles");
 
 		Floor floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
@@ -298,6 +300,15 @@ public class GenerateRoom : MonoBehaviour {
 
 						// TODO: Major problem ensure this doesn't intersect with anything else in the room.
 						r.AddEnemyToSpawn (enemyToSpawn, spawnPosition);
+					}
+
+					int obstacles_to_spawn = 1;
+					for (int k = obstacles_to_spawn; k > 0; k--) {
+						GameObject obstacleToSpawn = enclosingInstance.obstaclePrefabs [Random.Range (0, enclosingInstance.obstaclePrefabs.Length)];
+
+						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range (0.0f, delta_xs [i]), obstacleToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range (0.0f, delta_zs [j]));
+
+						r.AddEnemyToSpawn (obstacleToSpawn, spawnPosition);
 					}
 				}
 			}
