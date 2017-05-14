@@ -56,28 +56,6 @@ public class MainCharacterController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-<<<<<<< HEAD
-		weapon.fire ((velocity.magnitude/movementSpeed * 0.3f) *velocity.normalized, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
-=======
-		if (Input.GetKey (KeyCode.W)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.forward * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.S)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.back * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.A)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.left * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.D)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.right * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
-			// TODO JRH: I think this line could cause some bad behavior, particularly if there is lag.
-			// If Time.deltaTime is greater than 0.02 seconds, then, 50 * Time.deltaTime will be greater
-			// than 1, and the velocity will INCREASE, not decrease.
-			velocity = velocity * Time.deltaTime * 50;
-		}
-		rb.MovePosition(transform.position + Time.deltaTime * velocity);
 
 		weapon.Cooldown ();
 		// Left Mouse
@@ -118,7 +96,6 @@ public class MainCharacterController : MonoBehaviour {
 		rb.MoveRotation(Quaternion.Euler (Quaternion.LookRotation (direction).eulerAngles + new Vector3(-90.0f, 180.0f, 0.0f)));
 
 		weapon.fire (transform.position, velocity, target, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack);
->>>>>>> origin/master
 	}
 
 	void FixedUpdate(){
