@@ -30,22 +30,6 @@ public class MainCharacterController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetKey (KeyCode.W)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.forward * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.S)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.back * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.A)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.left * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.D)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.right * Time.deltaTime * 60, movementSpeed);
-		} 
-		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
-			velocity = velocity * Time.deltaTime * 50;
-		}
-		rb.MovePosition(transform.position + Time.deltaTime * velocity);
 		weapon.fire ((velocity.magnitude/movementSpeed * 0.3f) *velocity.normalized, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack, transform.position);
 	}
 
@@ -60,6 +44,23 @@ public class MainCharacterController : MonoBehaviour {
 		} else if( Time.time >= invincibleTime && !mesh.enabled){
 			mesh.enabled = true;
 		}
+		if (Input.GetKey (KeyCode.W)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.forward * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (Input.GetKey (KeyCode.S)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.back * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (Input.GetKey (KeyCode.A)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.left * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (Input.GetKey (KeyCode.D)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.right * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
+			velocity = velocity * Time.fixedDeltaTime * 45;
+		}
+		rb.MovePosition(transform.position + Time.fixedDeltaTime * velocity);
+
 	}
 
 	public void OnTriggerEnter (Collider other) {
@@ -70,10 +71,13 @@ public class MainCharacterController : MonoBehaviour {
 				inflictDamage (damageInflicted);
 		}
 	}
+
 	public void OnCollisionStay (Collision other) {
 		if (other.collider.CompareTag ("Enemy")) {
-			float damageInflicted = other.collider.GetComponent<Enemy> ().getContactDamage();
-			if(Time.time >= invincibleTime) 
+			rb.velocity = Vector3.zero;
+			rb.angularVelocity = Vector3.zero;
+			float damageInflicted = other.collider.GetComponent<Enemy> ().getContactDamage ();
+			if (Time.time >= invincibleTime)
 				inflictDamage (damageInflicted);
 		}
 	}

@@ -1,0 +1,60 @@
+Initialize engine version: 5.6.0f3 (497a0f351392)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce GTX 960 (ID=0x1401)
+    Vendor:   NVIDIA
+    VRAM:     3072 MB
+    Driver:   21.21.13.7878
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\Assembly-CSharp-firstpass.dll (this message is harmless)
+Loading C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\Assembly-CSharp-firstpass.dll into Unity Child Domain
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.079 seconds
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Nicholas\Documents\Programs\CMSC425\unity-mystery-dungeon\test1_Data\Managed\System.dll (this message is harmless)
+desktop: 1920x1080 60Hz; virtual: 3840x1080 at 0,0
+<RI> Initializing input.
+<RI> Input initialized.
+<RI> Initialized touch support.
+UnloadTime: 0.817563 ms
+Failed to create agent because there is no valid NavMesh
+ 
+(Filename:  Line: 598)
+
+Failed to create agent because it is not close enough to the NavMesh
+ 
+(Filename:  Line: 612)
+
+Look rotation viewing vector is zero
+ 
+(Filename:  Line: 92)
+
+"SetDestination" can only be called on an active agent that has been placed on a NavMesh.
+ 
+(Filename:  Line: 214)
+
+Setting up 4 worker threads for Enlighten.
+  Thread -> id: 2920 -> priority: 1 
+  Thread -> id: 303c -> priority: 1 
+  Thread -> id: 31c4 -> priority: 1 
+  Thread -> id: 253c -> priority: 1 
+Look rotation viewing vector is zero
+ 
+(Filename:  Line: 92)
+
+"SetDestination" can only be called on an active agent that has been placed on a NavMesh.
+ 
+(Filename:  Line: 214)
+
+Look rotation viewing vector is zero
+ 
+(Filename:  Line: 92)
+

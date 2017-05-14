@@ -17,11 +17,12 @@ public class Enemy : MonoBehaviour {
 	public float knockBackResistance;
 	public float MAX_HEALTH;
 	public float current_health;
-	public Vector3 forwardsVelocity;
 
+	protected Vector3 forwardsVelocity;
 	protected Rigidbody rb;
 	protected Vector3 knockBackDirection;
-	void Start () {
+
+	public void Start () {
 		rb = GetComponent<Rigidbody> ();
 		current_health = MAX_HEALTH;
 		player = GameObject.Find ("Player");
