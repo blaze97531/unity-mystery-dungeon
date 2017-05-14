@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MainCharacterController : MonoBehaviour {
 	public float maxHealth = 10;
@@ -22,10 +23,35 @@ public class MainCharacterController : MonoBehaviour {
 
 	private Rigidbody rb;
 
+	private Slider healthBar;
+	private Text healthText;
+	private Text movementSpeedText;
+	private Text bulletDamageText;
+	private Text bulletDelayText;
+	private Text bulletSpeedText;
+	private Text bulletSizeText;
+	private Text bulletKnockbackText;
+	private Text weaponText;
+
 	// Use this for initialization
 	void Start () {
 		rb = GetComponent<Rigidbody> ();
 		currentHealth = maxHealth;
+
+		healthBar = (Slider)GameObject.Find ("HealthBar").GetComponent<Slider> ();
+		healthText = (Text)GameObject.Find ("HealthText").GetComponent<Text> ();
+		movementSpeedText = (Text)GameObject.Find ("MovementSpeed").GetComponent<Text> ();
+		bulletDamageText = (Text)GameObject.Find ("BulletDamage").GetComponent<Text> ();
+		bulletDelayText = (Text)GameObject.Find ("BulletDelay").GetComponent<Text> ();
+		bulletSpeedText = (Text)GameObject.Find ("BulletSpeed").GetComponent<Text> ();
+		bulletSizeText = (Text)GameObject.Find ("BulletSize").GetComponent<Text> ();
+		bulletKnockbackText = (Text)GameObject.Find ("BulletKnockback").GetComponent<Text> ();
+		weaponText = (Text)GameObject.Find ("WeaponText").GetComponent<Text> ();
+
+		healthBar.maxValue = maxHealth;
+		UpdateHealthUI ();
+		UpdateStatsUI ();
+		UpdateWeaponUI ();
 	}
 	
 	// Update is called once per frame
@@ -122,9 +148,28 @@ public class MainCharacterController : MonoBehaviour {
 
 	public void inflictDamage (float amount) {
 		currentHealth -= amount;
+		UpdateHealthUI ();
 		invincibleTime = Time.time + (invincibilityTime * amount);
 		if (currentHealth <= 0.0f) {
 			//Destroy (gameObject); Player lost
 		}
+	}
+
+	private void UpdateHealthUI () {
+		healthBar.value = currentHealth;
+		healthText.text = currentHealth + " / " + maxHealth;
+	}
+
+	private void UpdateStatsUI () {
+		movementSpeedText.text = movementSpeed.ToString();
+		bulletDamageText.text = bulletDamage.ToString();
+		bulletDelayText.text = bulletDelay.ToString();
+		bulletSpeedText.text = bulletSpeed.ToString();
+		bulletSizeText.text = bulletSize.ToString();
+		bulletKnockbackText.text = bulletKnockBack.ToString();
+	}
+
+	private void UpdateWeaponUI () {
+		weaponText.text = weapon.weaponName;
 	}
 }

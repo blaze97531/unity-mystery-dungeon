@@ -35,15 +35,16 @@ public class GenerateRoom : MonoBehaviour {
 		floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
 
-		player = GameObject.FindWithTag ("Player");
 	}
 
 	void Update () {		
-		Room currentRoom = floor.GetRoomContaining (player.transform.position);
-		currentRoom.ClearFog ();
-		currentRoom.SpawnEnemies ();
-		if (currentRoom.CheckIfCleared ()) {
-			currentRoom.OpenAllDoors ();
+		if (playerSpawned) {
+			Room currentRoom = floor.GetRoomContaining (player.transform.position);
+			currentRoom.ClearFog ();
+			currentRoom.SpawnEnemies ();
+			if (currentRoom.CheckIfCleared ()) {
+				currentRoom.OpenAllDoors ();
+			}
 		}
 
 		// Developer-mode cheats. Removes all fog.
@@ -279,15 +280,12 @@ public class GenerateRoom : MonoBehaviour {
 			// Copy the current state of the unionFind structure; this copy should not be modified further.
 			rooms = unionFind.Copy();
 
-			// Now, make a certain number of different types of rooms.
-			int num_rooms = rooms.NumberOfSets();
-						
 			List<Room.Type> roomTypes = new List<Room.Type>();
 			// One starting room.
 			roomTypes.Add(Room.Type.STARTING);
 
 			// Rest are hostile rooms
-			while (roomTypes.Count < num_rooms) {
+			while (roomTypes.Count < rooms.NumberOfSets()) {
 				roomTypes.Add(Room.Type.HOSTILES);
 			}
 
@@ -381,7 +379,7 @@ public class GenerateRoom : MonoBehaviour {
 						enemies_to_spawn = Random.Range (1, 3);
 					} else if (r.roomType == Room.Type.STARTING) {
 						if (!enclosingInstance.playerSpawned) {
-							Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
+							enclosingInstance.player = Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
 							enclosingInstance.playerSpawned = true;
 						}
 						obstacles_to_spawn = 3;

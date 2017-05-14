@@ -5,7 +5,6 @@ using UnityEngine;
 public class machinegun : Weapon {
 
 	void Start () {
-		weaponName = "machinegun";
 		bullet = Resources.Load("Prefab/Bullet");
 	}
 

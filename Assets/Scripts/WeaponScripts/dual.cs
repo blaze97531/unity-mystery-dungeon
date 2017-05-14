@@ -5,7 +5,6 @@ using UnityEngine;
 public class dual : Weapon {
 
 	void Start () {
-		weaponName = "dual";
 		bullet = Resources.Load("Prefab/Bullet");
 	}
 

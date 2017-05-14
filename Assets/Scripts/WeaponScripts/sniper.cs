@@ -5,7 +5,6 @@ using UnityEngine;
 public class sniper : Weapon {
 
 	void Start () {
-		weaponName = "sniper";
 		bullet = Resources.Load("Prefab/Bullet");
 	}
 		
