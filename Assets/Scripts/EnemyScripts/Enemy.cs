@@ -24,7 +24,7 @@ public class Enemy : MonoBehaviour {
 	void Start () {
 		rb = GetComponent<Rigidbody> ();
 		current_health = MAX_HEALTH;
-		player = GameObject.Find ("Player");
+		player = GameObject.FindWithTag ("Player");
 	}
 
 	public virtual void OnTriggerEnter (Collider other) {
@@ -62,7 +62,7 @@ public class Enemy : MonoBehaviour {
 		Ray direction = new Ray (transform.position, Vector3.Normalize(vectorToPlayer()));
 		RaycastHit[] hits = Physics.RaycastAll (direction, Vector3.Distance(transform.position, player.GetComponent<Transform> ().position));
 		foreach(RaycastHit h in hits){
-			if (h.collider.gameObject.name.Equals("Player")) 
+			if (h.collider.gameObject.CompareTag("Player")) 
 				ret = true;
 			if (h.collider.gameObject.tag.Equals("Wall") )
 				return false;

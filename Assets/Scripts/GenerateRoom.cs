@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GenerateRoom : MonoBehaviour {
 
+	private GameObject playerPrefab;
 	private GameObject groundPrefab;
 	private GameObject wallPrefab;
 	private GameObject fogPrefab;
@@ -16,8 +17,12 @@ public class GenerateRoom : MonoBehaviour {
 	private Floor floor;
 	private GameObject player;
 
+	private bool playerSpawned;
+
 	// Use this for initialization
 	void Start () {
+		playerSpawned = false;
+		playerPrefab = Resources.Load<GameObject> ("Prefab/Player");
 		groundPrefab = Resources.Load<GameObject> ("Prefab/Ground");
 		wallPrefab = Resources.Load<GameObject> ("Prefab/Wall");
 		emptyPrefab = Resources.Load<GameObject> ("Prefab/EmptyGameObject");
@@ -30,15 +35,22 @@ public class GenerateRoom : MonoBehaviour {
 		floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
 
-		player = GameObject.Find ("Player");
+		player = GameObject.FindWithTag ("Player");
 	}
 
-	void Update () {
+	void Update () {		
 		Room currentRoom = floor.GetRoomContaining (player.transform.position);
 		currentRoom.ClearFog ();
 		currentRoom.SpawnEnemies ();
 		if (currentRoom.CheckIfCleared ()) {
 			currentRoom.OpenAllDoors ();
+		}
+
+		// Developer-mode cheats. Removes all fog.
+		if (Input.GetKeyDown (KeyCode.C)) {
+			foreach (Room r in floor.cellsToRooms.Values) {
+				r.ClearFog ();
+			}
 		}
 	}
 		
@@ -75,8 +87,15 @@ public class GenerateRoom : MonoBehaviour {
 	}
 
 	private class Room {
+		public enum Type {
+			STARTING, HOSTILES
+		}
+
 		// The grid cells of the floor that comprise this room
 		public List<Cell> cells; 
+
+		// What type of room this is
+		public Type roomType;
 
 		// All the doors leading in and out of this room. Note: 
 		// individual doors will appear in TWO different rooms
@@ -89,8 +108,9 @@ public class GenerateRoom : MonoBehaviour {
 		private List<GameObject> aliveEnemies;
 		private bool cleared;
 
-		public Room (List<Cell> cells) {
+		public Room (List<Cell> cells, Room.Type roomType) {
 			this.cells = cells;
+			this.roomType = roomType;
 			this.doors = new List<GameObject>();
 			this.fog = new List<GameObject>();
 			this.enemiesToSpawn = new List<GameObject>();
@@ -136,8 +156,12 @@ public class GenerateRoom : MonoBehaviour {
 		}
 
 		public bool CheckIfCleared () {
-			aliveEnemies.RemoveAll (IsNull);
-			if (!cleared && aliveEnemies.Count == 0) {
+			if (roomType == Type.HOSTILES) {
+				aliveEnemies.RemoveAll (IsNull);
+				if (!cleared && aliveEnemies.Count == 0) {
+					cleared = true;
+				}
+			} else if (roomType == Type.STARTING) {
 				cleared = true;
 			}
 			return cleared;
@@ -169,7 +193,7 @@ public class GenerateRoom : MonoBehaviour {
 		// UnionFind structure where each set is all cells that make up one room.
 		private UnionFind<Cell> rooms;
 		// List<Cells> in a room --> Room object for that room
-		private Dictionary<List<Cell>, Room> cellsToRooms;
+		public Dictionary<List<Cell>, Room> cellsToRooms;
 
 		public Floor (GenerateRoom enclosingInstance, int n_x, int n_z) {
 			this.cellsToRooms = new Dictionary<List<Cell>, Room>();
@@ -254,8 +278,24 @@ public class GenerateRoom : MonoBehaviour {
 			// Each set within the unionFind structure now represents a room.
 			// Copy the current state of the unionFind structure; this copy should not be modified further.
 			rooms = unionFind.Copy();
+
+			// Now, make a certain number of different types of rooms.
+			int num_rooms = rooms.NumberOfSets();
+						
+			List<Room.Type> roomTypes = new List<Room.Type>();
+			// One starting room.
+			roomTypes.Add(Room.Type.STARTING);
+
+			// Rest are hostile rooms
+			while (roomTypes.Count < num_rooms) {
+				roomTypes.Add(Room.Type.HOSTILES);
+			}
+
 			foreach (List<Cell> cellList in rooms.GetSets()) {
-				cellsToRooms.Add(cellList, new Room(cellList));
+				// Room types are doled out at random.
+				int rand_index = Random.Range(0, roomTypes.Count);
+				cellsToRooms.Add(cellList, new Room(cellList, roomTypes[rand_index]));
+				roomTypes.RemoveAt(rand_index);
 			}
 
 			// Probability of adding an unncessary door (a door that connects two sections that are already connected).
@@ -333,8 +373,20 @@ public class GenerateRoom : MonoBehaviour {
 					Room r;
 					cellsToRooms.TryGetValue (rooms.Find(cells[i,j]), out r);
 
-					int obstacles_to_spawn = Random.Range(1,5);
-					int enemies_to_spawn = Random.Range(1,3);
+					int obstacles_to_spawn = 0; 
+					int enemies_to_spawn = 0;
+
+					if (r.roomType == Room.Type.HOSTILES) {
+						obstacles_to_spawn = Random.Range (1, 5);
+						enemies_to_spawn = Random.Range (1, 3);
+					} else if (r.roomType == Room.Type.STARTING) {
+						if (!enclosingInstance.playerSpawned) {
+							Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
+							enclosingInstance.playerSpawned = true;
+						}
+						obstacles_to_spawn = 3;
+						enemies_to_spawn = 0;
+					}
 
 					const int GIVE_UP_THRESHOLD = 100; // Avoid infinite loops if nothing can be spawned.
 
@@ -469,7 +521,7 @@ public class GenerateRoom : MonoBehaviour {
 		// Must check each type of collider individually.
 		// I am using GetComponentInChildren because some of the MMMM assests have colliders in seperate elements.
 
-		const int LAYER_MASK = ~(1 << 8); // Ignores the ground. The ground is set to layer 8.
+		const int LAYER_MASK = ~(1 << 8); // Ignores the ground and the fog objects. They are put in layer 8.
 		const float BUFFER_WIDTH = 0.5f; // Buffer between the object and any other objects.
 
 		CapsuleCollider capsule = spawn.GetComponentInChildren<CapsuleCollider> ();
@@ -493,6 +545,11 @@ public class GenerateRoom : MonoBehaviour {
 		BoxCollider box = spawn.GetComponentInChildren<BoxCollider> ();
 		if (box != null) {
 			return !Physics.CheckBox (spawnPosition + box.center, box.size / 2.0f + new Vector3(BUFFER_WIDTH, BUFFER_WIDTH, BUFFER_WIDTH), orientation, LAYER_MASK);
+		}
+
+		SphereCollider sphere = spawn.GetComponentInChildren<SphereCollider> ();
+		if (sphere != null) {
+			return !Physics.CheckSphere (spawnPosition + sphere.center, sphere.radius + BUFFER_WIDTH);
 		}
 
 		Debug.Log ("Warning: CanSpawnObject() failed to check the collider of an object");
