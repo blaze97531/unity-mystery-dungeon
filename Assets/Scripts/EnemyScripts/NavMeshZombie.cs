@@ -5,10 +5,10 @@ using UnityEngine.AI;
 
 public class NavMeshZombie : Enemy {
 	NavMeshAgent agent;
-	float time;
+
+
 	new void Start(){
 		agent = GetComponent<NavMeshAgent> ();
-		time = 0;
 		base.Start ();
 	}
 	// Update is called once per frame
@@ -18,7 +18,7 @@ public class NavMeshZombie : Enemy {
 		Vector3 dir = agent.desiredVelocity;
 		dir.y = 0;
 		Quaternion rot = Quaternion.LookRotation (dir,Vector3.up);
-		transform.rotation = Quaternion.SlerpUnclamped(transform.rotation, rot,turnSpeed * Time.deltaTime);
+		rb.rotation = Quaternion.SlerpUnclamped(rb.rotation, rot,turnSpeed * Time.fixedDeltaTime);
 	}
 
 	new void OnTriggerEnter (Collider other) {
