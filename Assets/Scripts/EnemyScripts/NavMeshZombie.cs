@@ -34,6 +34,5 @@ public class NavMeshZombie : Enemy {
 			agent.velocity =  agent.velocity + direction * bulletKnockBack/knockBackResistance;
 		}
 	}
-
 }
 

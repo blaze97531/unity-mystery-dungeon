@@ -53,11 +53,40 @@ public class MainCharacterController : MonoBehaviour {
 		UpdateStatsUI ();
 		UpdateWeaponUI ();
 	}
-	
-	// Update is called once per frame
-	void Update () {
 
+	void Update () {
 		weapon.Cooldown ();
+	}
+
+	private void ShootAtAndRotateTowards (Vector3 target) {
+		Vector3 direction = target - transform.position;
+
+		rb.MoveRotation(Quaternion.Euler (Quaternion.LookRotation (direction).eulerAngles + new Vector3(-90.0f, 180.0f, 0.0f)));
+
+		weapon.fire (transform.position, velocity, target, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack);
+	}
+
+	void FixedUpdate(){
+		if (Input.GetKey (KeyCode.W)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.forward * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (Input.GetKey (KeyCode.S)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.back * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (Input.GetKey (KeyCode.A)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.left * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (Input.GetKey (KeyCode.D)) {
+			velocity = Vector3.ClampMagnitude (velocity + Vector3.right * Time.fixedDeltaTime * 60, movementSpeed);
+		} 
+		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
+			// TODO JRH: I think this line could cause some bad behavior, particularly if there is lag.
+			// If Time.deltaTime is greater than 0.02 seconds, then, 50 * Time.deltaTime will be greater
+			// than 1, and the velocity will INCREASE, not decrease.
+			velocity = velocity * Time.fixedDeltaTime * 45;
+		}
+		rb.MovePosition(transform.position + Time.deltaTime * velocity);
+
 		// Left Mouse
 		if (Input.GetMouseButton(0)) {
 			RaycastHit info;
@@ -87,18 +116,9 @@ public class MainCharacterController : MonoBehaviour {
 					transform.eulerAngles = new Vector3 (270, 270, 0);
 				}
 			}
-		} 
-	}
+		}
 
-	private void ShootAtAndRotateTowards (Vector3 target) {
-		Vector3 direction = target - transform.position;
 
-		rb.MoveRotation(Quaternion.Euler (Quaternion.LookRotation (direction).eulerAngles + new Vector3(-90.0f, 180.0f, 0.0f)));
-
-		weapon.fire (transform.position, velocity, target, bulletDelay, bulletSpeed, bulletDamage, bulletSize, bulletKnockBack);
-	}
-
-	void FixedUpdate(){
 		MeshRenderer mesh = transform.GetComponent<MeshRenderer> ();
 		if (Time.time < invincibleTime) {
 			if (Time.time % 0.25 < 0.125) {
@@ -109,23 +129,6 @@ public class MainCharacterController : MonoBehaviour {
 		} else if( Time.time >= invincibleTime && !mesh.enabled){
 			mesh.enabled = true;
 		}
-		if (Input.GetKey (KeyCode.W)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.forward * Time.fixedDeltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.S)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.back * Time.fixedDeltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.A)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.left * Time.fixedDeltaTime * 60, movementSpeed);
-		} 
-		if (Input.GetKey (KeyCode.D)) {
-			velocity = Vector3.ClampMagnitude (velocity + Vector3.right * Time.fixedDeltaTime * 60, movementSpeed);
-		} 
-		if (!Input.GetKey (KeyCode.W) && !Input.GetKey (KeyCode.S) && !Input.GetKey (KeyCode.A) && !Input.GetKey (KeyCode.D)) {
-			velocity = velocity * Time.fixedDeltaTime * 45;
-		}
-		rb.MovePosition(transform.position + Time.fixedDeltaTime * velocity);
-
 	}
 
 	public void OnTriggerEnter (Collider other) {
@@ -136,13 +139,10 @@ public class MainCharacterController : MonoBehaviour {
 				inflictDamage (damageInflicted);
 		}
 	}
-
 	public void OnCollisionStay (Collision other) {
 		if (other.collider.CompareTag ("Enemy")) {
-			rb.velocity = Vector3.zero;
-			rb.angularVelocity = Vector3.zero;
-			float damageInflicted = other.collider.GetComponent<Enemy> ().getContactDamage ();
-			if (Time.time >= invincibleTime)
+			float damageInflicted = other.collider.GetComponent<Enemy> ().getContactDamage();
+			if(Time.time >= invincibleTime) 
 				inflictDamage (damageInflicted);
 		}
 	}

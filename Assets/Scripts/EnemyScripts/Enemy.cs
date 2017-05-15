@@ -21,8 +21,7 @@ public class Enemy : MonoBehaviour {
 	protected Vector3 forwardsVelocity;
 	protected Rigidbody rb;
 	protected Vector3 knockBackDirection;
-
-	public void Start () {
+	protected void Start () {
 		rb = GetComponent<Rigidbody> ();
 		current_health = MAX_HEALTH;
 		player = GameObject.FindWithTag ("Player");
