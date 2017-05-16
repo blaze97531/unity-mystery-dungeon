@@ -32,6 +32,7 @@ public class MainCharacterController : MonoBehaviour {
 	private Text bulletSizeText;
 	private Text bulletKnockbackText;
 	private Text weaponText;
+	private Slider weaponCooldownBar;
 
 	// Use this for initialization
 	void Start () {
@@ -47,14 +48,15 @@ public class MainCharacterController : MonoBehaviour {
 		bulletSizeText = (Text)GameObject.Find ("BulletSize").GetComponent<Text> ();
 		bulletKnockbackText = (Text)GameObject.Find ("BulletKnockback").GetComponent<Text> ();
 		weaponText = (Text)GameObject.Find ("WeaponText").GetComponent<Text> ();
+		weaponCooldownBar = (Slider)GameObject.Find ("WeaponCooldownBar").GetComponent<Slider> ();
 
 		UpdateHealthUI ();
-		UpdateStatsUI ();
-		UpdateWeaponUI ();
+		UpdateWeaponAndStatsUI ();
 	}
 
 	void Update () {
 		weapon.Cooldown ();
+		UpdateWeaponCooldownUI ();
 	}
 
 	private void ShootAtAndRotateTowards (Vector3 target) {
@@ -140,12 +142,12 @@ public class MainCharacterController : MonoBehaviour {
 		if (other.CompareTag ("Weapon")) {
 			weapon = other.GetComponent<Weapon>();
 			Destroy(other.gameObject);
-			UpdateWeaponUI ();
+			UpdateWeaponAndStatsUI ();
 		}
 		if (other.CompareTag ("Item")) {
 			other.GetComponent<Item>().apply(this);
 			Destroy(other.gameObject);
-			UpdateStatsUI ();
+			UpdateWeaponAndStatsUI ();
 			UpdateHealthUI ();
 		}
 		if (other.CompareTag ("Bandage") && currentHealth < maxHealth) {
@@ -180,16 +182,28 @@ public class MainCharacterController : MonoBehaviour {
 		healthText.text = currentHealth + " / " + maxHealth;
 	}
 
-	private void UpdateStatsUI () {
+	private void UpdateWeaponAndStatsUI () {
+		float damage = bulletDamage;
+		float delay = bulletDelay;
+		float speed = bulletSpeed;
+		float size = bulletSize;
+		float knockback = bulletKnockBack;
+
+		weapon.ApplyMultipliers (ref delay, ref speed, ref damage, ref size, ref knockback);
+
 		movementSpeedText.text = movementSpeed.ToString();
-		bulletDamageText.text = bulletDamage.ToString();
-		bulletDelayText.text = bulletDelay.ToString();
-		bulletSpeedText.text = bulletSpeed.ToString();
-		bulletSizeText.text = bulletSize.ToString();
-		bulletKnockbackText.text = bulletKnockBack.ToString();
+		bulletDamageText.text = damage.ToString ();
+		bulletDelayText.text = delay.ToString();
+		bulletSpeedText.text = speed.ToString();
+		bulletSizeText.text = size.ToString();
+		bulletKnockbackText.text = knockback.ToString();
+
+		weaponText.text = weapon.weaponName;
+		weaponCooldownBar.maxValue = delay;
+		UpdateWeaponCooldownUI ();
 	}
 
-	private void UpdateWeaponUI () {
-		weaponText.text = weapon.weaponName;
+	private void UpdateWeaponCooldownUI () {
+		weaponCooldownBar.value = weapon.currTime;
 	}
 }

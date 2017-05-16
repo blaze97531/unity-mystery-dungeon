@@ -5,7 +5,7 @@ using UnityEngine;
 public class shotgun : Weapon {
 
 	public override void fire(Vector3 position, Vector3 velocity, Vector3 target, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack){
-		bulletDelay = bulletDelay * 3;
+		ApplyMultipliers (ref bulletDelay, ref bulletSpeed, ref bulletDamage, ref bulletSize, ref bulletKnockBack);
 		Vector3 direction = (target - position).normalized;
 		if (currTime >= bulletDelay) {
 			for (int i = -2; i <= 2; i++) { //essentially fires 5 bullets in an arch

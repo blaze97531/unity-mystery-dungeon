@@ -5,7 +5,7 @@ using UnityEngine;
 public class dual : Weapon {
 
 	public override void fire(Vector3 position, Vector3 velocity, Vector3 target, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack){
-		bulletDelay = bulletDelay * 1.5f;
+		ApplyMultipliers (ref bulletDelay, ref bulletSpeed, ref bulletDamage, ref bulletSize, ref bulletKnockBack);
 		if (currTime >= bulletDelay) {
 			Vector3 direction =  (target - position).normalized;
 			Vector3 pos = position;
