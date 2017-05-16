@@ -11,7 +11,6 @@ public class Item : MonoBehaviour {
 	public float bulletDelayMultiplier;
 	public float bulletDamage;
 	public float bulletDamageMultiplier;
-	public float invincibilityTime;
 	public float maxHealth;
 
 	void Update() {
@@ -62,13 +61,6 @@ public class Item : MonoBehaviour {
 			p.bulletDamage *= bulletDamageMultiplier;
 		else if (bulletDamageMultiplier < 0)
 			p.bulletDamage /= -bulletDamageMultiplier;
-		
-		if (p.invincibilityTime + invincibilityTime < .5f)
-			p.invincibilityTime = .5f;
-		else if (p.invincibilityTime + invincibilityTime > 3)
-			p.invincibilityTime = 3;
-		else
-			p.invincibilityTime += invincibilityTime;
 
 		p.maxHealth += maxHealth;
 		p.currentHealth += maxHealth;

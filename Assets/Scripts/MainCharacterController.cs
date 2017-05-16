@@ -184,7 +184,7 @@ public class MainCharacterController : MonoBehaviour {
 	public void inflictDamage (float amount) {
 		currentHealth -= amount;
 		UpdateHealthUI ();
-		invincibleTime = Time.time + (invincibilityTime * amount);
+		invincibleTime = Time.time + invincibilityTime;
 		if (currentHealth <= 0.0f) {
 			//Destroy (gameObject); Player lost
 		}
