@@ -41,7 +41,7 @@ public class GenerateRoom : MonoBehaviour {
 		floor.generateGameObjects ();
 	}
 
-	void Update () {		
+	/*void Update () {		
 		if (playerSpawned) {
 			Room currentRoom = floor.GetRoomContaining (player.transform.position);
 			currentRoom.ClearFog ();
@@ -50,7 +50,7 @@ public class GenerateRoom : MonoBehaviour {
 				currentRoom.OpenAllDoors ();
 				currentRoom.SpawnRewards ();
 			} else {
-				/* Spawn enemies/treasure as soon as the doors close. */
+				/* Spawn enemies/treasure as soon as the doors close. *//*
 				if (currentRoom.AllDoorsClosed ()) {
 					currentRoom.SpawnEnemies ();
 				} else {
@@ -65,7 +65,7 @@ public class GenerateRoom : MonoBehaviour {
 				r.ClearFog ();
 			}
 		}
-	}
+	}*/
 		
 	private enum CellEdge {
 		EMPTY, WALL, DOOR
@@ -459,7 +459,7 @@ public class GenerateRoom : MonoBehaviour {
 						bandage_rewards_to_spawn = Random.Range (0, 4) - 2; // 1/4 chance for bandage rewards (in each cell of the room).
 					} else if (r.roomType == Room.Type.STARTING) {
 						if (!enclosingInstance.playerSpawned) {
-							enclosingInstance.player = Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
+							enclosingInstance.player = Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (-250, .5f, -260), enclosingInstance.playerPrefab.transform.rotation);//new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
 							enclosingInstance.playerSpawned = true;
 						}
 						obstacles_to_spawn = 3;
