@@ -11,6 +11,6 @@ public class CameraScript : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		playerLocation = GameObject.FindWithTag ("Player").GetComponent<Transform> ().position;
-		transform.position = new Vector3 (playerLocation.x, playerLocation.y + 10, playerLocation.z - 5);
+		transform.position = new Vector3 (playerLocation.x, playerLocation.y + 10, playerLocation.z - 2);
 	}
 }

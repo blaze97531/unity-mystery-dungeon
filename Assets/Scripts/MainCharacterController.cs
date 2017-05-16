@@ -139,24 +139,30 @@ public class MainCharacterController : MonoBehaviour {
 			mesh.enabled = true;
 		}
 	}
-
+	public void OnTriggerStay (Collider other) {
+		if (other.CompareTag ("Weapon")) {
+			if (Input.GetKey (KeyCode.E)) {
+				weapon = other.GetComponent<Weapon> ();
+				Destroy (other.gameObject);
+				UpdateWeaponAndStatsUI ();
+			}
+		}
+		if (other.CompareTag ("Item")) {
+			if (Input.GetKey (KeyCode.E)) {
+				other.GetComponent<Item> ().apply (this);
+				Destroy (other.gameObject);
+				UpdateWeaponAndStatsUI ();
+				UpdateHealthUI ();
+			}
+		}
+	}
+		
 	public void OnTriggerEnter (Collider other) {
 		if (other.CompareTag ("EnemyBullet")) {
 			float damageInflicted = other.GetComponent<EnemyBulletScript> ().getDamage();
 			Destroy (other.gameObject);
 			if(Time.time >= invincibleTime) //player gets invicibility for a short time when he gets hit
 				inflictDamage (damageInflicted);
-		}
-		if (other.CompareTag ("Weapon")) {
-			weapon = other.GetComponent<Weapon>();
-			Destroy(other.gameObject);
-			UpdateWeaponAndStatsUI ();
-		}
-		if (other.CompareTag ("Item")) {
-			other.GetComponent<Item>().apply(this);
-			Destroy(other.gameObject);
-			UpdateWeaponAndStatsUI ();
-			UpdateHealthUI ();
 		}
 		if (other.CompareTag ("Bandage") && currentHealth < maxHealth) {
 			if (currentHealth + 1 > maxHealth)

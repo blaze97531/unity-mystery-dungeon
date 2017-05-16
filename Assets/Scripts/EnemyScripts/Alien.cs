@@ -15,7 +15,7 @@ public class Alien : Enemy {
 	new void Start(){
 		agent = GetComponent<UnityEngine.AI.NavMeshAgent> ();
 		base.Start ();
-		state = "patrolling";
+		state = "patrol";
 	}
 
 	// Update is called once per frame
