@@ -13,6 +13,9 @@ public class GenerateRoom : MonoBehaviour {
 
 	private GameObject[] enemyPrefabs;
 	private GameObject[] obstaclePrefabs;
+	private GameObject[] itemPrefabs;
+	private GameObject[] weaponPrefabs;
+	private GameObject bandagePrefab;
 
 	private Floor floor;
 	private GameObject player;
@@ -31,6 +34,9 @@ public class GenerateRoom : MonoBehaviour {
 
 		enemyPrefabs = Resources.LoadAll<GameObject> ("Prefab/Enemies");
 		obstaclePrefabs = Resources.LoadAll<GameObject> ("Prefab/Obstacles");
+		itemPrefabs = Resources.LoadAll<GameObject> ("Prefab/Items");
+		weaponPrefabs = Resources.LoadAll<GameObject> ("Prefab/Weapons/PlayerWeapons");
+		bandagePrefab = Resources.Load<GameObject> ("Prefab/Bandage");
 
 		floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
@@ -41,9 +47,17 @@ public class GenerateRoom : MonoBehaviour {
 		if (playerSpawned) {
 			Room currentRoom = floor.GetRoomContaining (player.transform.position);
 			currentRoom.ClearFog ();
-			currentRoom.SpawnEnemies ();
+
 			if (currentRoom.CheckIfCleared ()) {
 				currentRoom.OpenAllDoors ();
+				currentRoom.SpawnRewards ();
+			} else {
+				/* Spawn enemies as soon as the doors close. */
+				if (currentRoom.AllDoorsClosed ()) {
+					currentRoom.SpawnEnemies ();
+				} else {
+					currentRoom.CloseAllDoors ();
+				}
 			}
 		}
 
@@ -89,7 +103,7 @@ public class GenerateRoom : MonoBehaviour {
 
 	private class Room {
 		public enum Type {
-			STARTING, HOSTILES
+			STARTING, HOSTILES, TREASURE, EMPTY
 		}
 
 		// The grid cells of the floor that comprise this room
@@ -109,6 +123,9 @@ public class GenerateRoom : MonoBehaviour {
 		private List<GameObject> aliveEnemies;
 		private bool cleared;
 
+		private List<GameObject> rewards;
+		private List<Vector3> rewardSpawnPositions;
+
 		public Room (List<Cell> cells, Room.Type roomType) {
 			this.cells = cells;
 			this.roomType = roomType;
@@ -118,6 +135,9 @@ public class GenerateRoom : MonoBehaviour {
 			this.spawnPositions = new List<Vector3>();
 			this.aliveEnemies = new List<GameObject> ();
 			this.cleared = false;
+
+			this.rewards = new List<GameObject> ();
+			this.rewardSpawnPositions = new List <Vector3> ();
 		}
 
 		public void AddDoor (GameObject door) {
@@ -133,6 +153,11 @@ public class GenerateRoom : MonoBehaviour {
 			spawnPositions.Add (spawnPosition);
 		}
 
+		public void AddRewardToSpawn (GameObject reward, Vector3 spawnPosition) {
+			rewards.Add (reward);
+			rewardSpawnPositions.Add (spawnPosition);
+		}
+
 		public void OpenAllDoors () {
 			foreach (GameObject door in doors) {
 				door.GetComponent<DoorControlScript> ().OpenDoor ();
@@ -143,6 +168,15 @@ public class GenerateRoom : MonoBehaviour {
 			foreach (GameObject door in doors) {
 				door.GetComponent<DoorControlScript> ().CloseDoor ();
 			}
+		}
+
+		public bool AllDoorsClosed () {
+			foreach (GameObject door in doors) {
+				if (door.GetComponent<DoorControlScript> ().GetState () != DoorControlScript.DoorState.CLOSED) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public void SpawnEnemies () {
@@ -156,14 +190,24 @@ public class GenerateRoom : MonoBehaviour {
 			spawnPositions.Clear ();
 		}
 
+		public void SpawnRewards () {
+			for (int i = 0; i < rewards.Count; i++) {
+				if (CanSpawnObjectAt (rewards [i], rewardSpawnPositions [i])) {
+					GameObject newReward = Instantiate<GameObject> (rewards [i], rewardSpawnPositions [i], Quaternion.identity);
+				}
+			}
+			rewards.Clear ();
+			rewardSpawnPositions.Clear ();
+		}
+
 		public bool CheckIfCleared () {
 			if (roomType == Type.HOSTILES) {
 				aliveEnemies.RemoveAll (IsNull);
-				if (!cleared && aliveEnemies.Count == 0) {
-					cleared = true;
-				}
-			} else if (roomType == Type.STARTING) {
+				cleared = aliveEnemies.Count == 0 && enemiesToSpawn.Count == 0;
+			} else if (roomType == Type.STARTING || roomType == Type.EMPTY) {
 				cleared = true;
+			} else if (roomType == Type.TREASURE) {
+				cleared = (enemiesToSpawn.Count == 0);
 			}
 			return cleared;
 		}
@@ -284,6 +328,16 @@ public class GenerateRoom : MonoBehaviour {
 			// One starting room.
 			roomTypes.Add(Room.Type.STARTING);
 
+			// ~ 10% will be empty, including the starting room.
+			while (roomTypes.Count < rooms.NumberOfSets() / 10) {
+				roomTypes.Add(Room.Type.EMPTY);
+			}
+
+			// ~25% of the rooms will be treasure rooms.
+			while (roomTypes.Count < rooms.NumberOfSets() / 10 + rooms.NumberOfSets() / 4) {
+				roomTypes.Add(Room.Type.TREASURE);
+			}
+
 			// Rest are hostile rooms
 			while (roomTypes.Count < rooms.NumberOfSets()) {
 				roomTypes.Add(Room.Type.HOSTILES);
@@ -373,17 +427,36 @@ public class GenerateRoom : MonoBehaviour {
 
 					int obstacles_to_spawn = 0; 
 					int enemies_to_spawn = 0;
+					int items_to_spawn = 0;
+					int weapons_to_spawn = 0;
+					int bandage_rewards_to_spawn = 0;
 
 					if (r.roomType == Room.Type.HOSTILES) {
 						obstacles_to_spawn = Random.Range (1, 5);
-						enemies_to_spawn = Random.Range (1, 3);
+						enemies_to_spawn = Random.Range (2, 4);
+						bandage_rewards_to_spawn = Random.Range (0, 4) - 2; // 1/4 chance for bandage rewards (in each cell of the room).
 					} else if (r.roomType == Room.Type.STARTING) {
 						if (!enclosingInstance.playerSpawned) {
 							enclosingInstance.player = Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
 							enclosingInstance.playerSpawned = true;
 						}
 						obstacles_to_spawn = 3;
-						enemies_to_spawn = 0;
+					} else if (r.roomType == Room.Type.TREASURE) {
+						obstacles_to_spawn = Random.Range (1, 5);
+						// 1/3 for no weapon, 2/3 for one weapon
+						weapons_to_spawn = Random.Range(0, 3);
+						if (weapons_to_spawn == 2) {
+							weapons_to_spawn = 1;
+						}
+
+						// 1/3 for no item, 1/2 for one item, 1/6 for two items
+						items_to_spawn = Random.Range (0, 3); 
+						items_to_spawn -= Random.Range (0, items_to_spawn); // Note; Random.Range(0,0) always returns 0.
+
+						// 1/2 chance for a bandage
+						bandage_rewards_to_spawn = Random.Range(0, 2);
+					} else if (r.roomType == Room.Type.EMPTY) {
+						obstacles_to_spawn = Random.Range (3, 11);
 					}
 
 					const int GIVE_UP_THRESHOLD = 100; // Avoid infinite loops if nothing can be spawned.
@@ -403,6 +476,32 @@ public class GenerateRoom : MonoBehaviour {
 					}
 
 					spawn_attempts = 0;
+					while (items_to_spawn > 0 && spawn_attempts < GIVE_UP_THRESHOLD) {
+						GameObject itemToSpawn = enclosingInstance.itemPrefabs [Random.Range (0, enclosingInstance.itemPrefabs.Length)];
+
+						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range (0.0f, delta_xs [i]), itemToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range (0.0f, delta_zs [j]));
+
+						if (CanSpawnObjectAt (itemToSpawn, spawnPosition)) {
+							r.AddEnemyToSpawn (itemToSpawn, spawnPosition);
+							items_to_spawn--;
+						}
+						spawn_attempts++;
+					}
+
+					spawn_attempts = 0;
+					while (weapons_to_spawn > 0 && spawn_attempts < GIVE_UP_THRESHOLD) {
+						GameObject itemToSpawn = enclosingInstance.weaponPrefabs [Random.Range (0, enclosingInstance.weaponPrefabs.Length)];
+
+						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range (0.0f, delta_xs [i]), itemToSpawn.transform.position.y, cumulative_delta_zs [j] + Random.Range (0.0f, delta_zs [j]));
+
+						if (CanSpawnObjectAt (itemToSpawn, spawnPosition)) {
+							r.AddEnemyToSpawn (itemToSpawn, spawnPosition);
+							weapons_to_spawn--;
+						}
+						spawn_attempts++;
+					}
+
+					spawn_attempts = 0;
 					while (enemies_to_spawn > 0 && spawn_attempts < GIVE_UP_THRESHOLD) {
 						GameObject enemyToSpawn = enclosingInstance.enemyPrefabs [Random.Range (0, enclosingInstance.enemyPrefabs.Length)];
 
@@ -412,6 +511,17 @@ public class GenerateRoom : MonoBehaviour {
 							r.AddEnemyToSpawn (enemyToSpawn, spawnPosition);
 							enemies_to_spawn--;
 						}
+						spawn_attempts++;
+					}
+
+					spawn_attempts = 0;
+					while (bandage_rewards_to_spawn > 0 && spawn_attempts < GIVE_UP_THRESHOLD) {
+						Vector3 spawnPosition = new Vector3 (cumulative_delta_xs [i] + Random.Range(0.0f, delta_xs[i]), enclosingInstance.bandagePrefab.transform.position.y, cumulative_delta_zs [j] + Random.Range(0.0f, delta_zs[j]));
+						if (CanSpawnObjectAt (enclosingInstance.bandagePrefab, spawnPosition)) {
+							r.AddRewardToSpawn (enclosingInstance.bandagePrefab, spawnPosition);
+							bandage_rewards_to_spawn--;
+						}
+
 						spawn_attempts++;
 					}
 				}

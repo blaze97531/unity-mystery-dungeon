@@ -48,7 +48,6 @@ public class MainCharacterController : MonoBehaviour {
 		bulletKnockbackText = (Text)GameObject.Find ("BulletKnockback").GetComponent<Text> ();
 		weaponText = (Text)GameObject.Find ("WeaponText").GetComponent<Text> ();
 
-		healthBar.maxValue = maxHealth;
 		UpdateHealthUI ();
 		UpdateStatsUI ();
 		UpdateWeaponUI ();
@@ -140,12 +139,12 @@ public class MainCharacterController : MonoBehaviour {
 		}
 		if (other.CompareTag ("Weapon")) {
 			weapon = other.GetComponent<Weapon>();
-			other.gameObject.SetActive (false);
+			Destroy(other.gameObject);
 			UpdateWeaponUI ();
 		}
 		if (other.CompareTag ("Item")) {
 			other.GetComponent<Item>().apply(this);
-			other.gameObject.SetActive (false);
+			Destroy(other.gameObject);
 			UpdateStatsUI ();
 			UpdateHealthUI ();
 		}
@@ -154,7 +153,7 @@ public class MainCharacterController : MonoBehaviour {
 				currentHealth = maxHealth;
 			else
 				currentHealth = currentHealth + 1;
-			other.gameObject.SetActive (false);
+			Destroy (other.gameObject);
 			UpdateHealthUI ();
 		}
 	}
@@ -176,6 +175,7 @@ public class MainCharacterController : MonoBehaviour {
 	}
 
 	private void UpdateHealthUI () {
+		healthBar.maxValue = maxHealth;
 		healthBar.value = currentHealth;
 		healthText.text = currentHealth + " / " + maxHealth;
 	}

@@ -23,6 +23,7 @@ public class DoorControlScript : MonoBehaviour {
 	private OpenDirection opening_direction; // The direction the door should move to open.
 	private Vector3 open_position;
 	private const float OPENING_SPEED = 1.0f; // m/s
+	private const float CLOSING_SPEED = 2.0f; // m/s
 
 	private void Start () {
 		rb = GetComponent<Rigidbody> ();
@@ -37,16 +38,16 @@ public class DoorControlScript : MonoBehaviour {
 				rb.MovePosition (open_position);
 				state = DoorState.OPEN;
 			} else {
-				rb.MovePosition (transform.position + GetDirectionVector (opening_direction) * Time.deltaTime);
+				rb.MovePosition (transform.position + GetDirectionVector (opening_direction) * OPENING_SPEED * Time.deltaTime);
 			}
 
 		} else if (state == DoorState.CLOSING) {
 			Vector3 difference = closed_position - transform.position;
-			if (difference.magnitude <= OPENING_SPEED * Time.deltaTime) {
+			if (difference.magnitude <= CLOSING_SPEED * Time.deltaTime) {
 				rb.MovePosition (closed_position);
 				state = DoorState.CLOSED;
 			} else {
-				rb.MovePosition (transform.position - GetDirectionVector(opening_direction) * Time.deltaTime);
+				rb.MovePosition (transform.position - GetDirectionVector(opening_direction) * CLOSING_SPEED * Time.deltaTime);
 			}
 
 		}
@@ -86,5 +87,9 @@ public class DoorControlScript : MonoBehaviour {
 		else if (opening_direction == OpenDirection.POS_Z || opening_direction == OpenDirection.NEG_Z) {
 			open_position = closed_position + GetDirectionVector(opening_direction) * transform.localScale.z;
 		}
+	}
+
+	public DoorState GetState () {
+		return state;
 	}
 }
