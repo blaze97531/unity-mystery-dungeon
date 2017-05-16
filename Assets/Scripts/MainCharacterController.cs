@@ -39,10 +39,15 @@ public class MainCharacterController : MonoBehaviour {
 	public int numRoomsCleared;
 	public int numEnemiesKilled;
 
+	private GameObject itemPickupCanvasPrefab;
+	private Dictionary<Collider, GameObject> itemInfoCanvases;
+
 	// Use this for initialization
 	void Start () {
 		rb = GetComponent<Rigidbody> ();
 		currentHealth = maxHealth;
+
+		itemPickupCanvasPrefab = Resources.Load<GameObject> ("Prefab/ItemPickupCanvas");
 
 		healthBar = (Slider)GameObject.Find ("HealthBar").GetComponent<Slider> ();
 		healthText = (Text)GameObject.Find ("HealthText").GetComponent<Text> ();
@@ -60,6 +65,8 @@ public class MainCharacterController : MonoBehaviour {
 		UpdateHealthUI ();
 		UpdateWeaponAndStatsUI ();
 		UpdateScoreUI ();
+
+		itemInfoCanvases = new Dictionary<Collider, GameObject> ();
 	}
 
 	void Update () {
@@ -145,6 +152,7 @@ public class MainCharacterController : MonoBehaviour {
 				weapon = other.GetComponent<Weapon> ();
 				Destroy (other.gameObject);
 				UpdateWeaponAndStatsUI ();
+				DestroyItemInfoCanvas (other);
 			}
 		}
 		if (other.CompareTag ("Item")) {
@@ -153,6 +161,7 @@ public class MainCharacterController : MonoBehaviour {
 				Destroy (other.gameObject);
 				UpdateWeaponAndStatsUI ();
 				UpdateHealthUI ();
+				DestroyItemInfoCanvas (other);
 			}
 		}
 	}
@@ -172,7 +181,22 @@ public class MainCharacterController : MonoBehaviour {
 			Destroy (other.gameObject);
 			UpdateHealthUI ();
 		}
+		if (other.CompareTag ("Item")) {
+			GameObject canvas = Instantiate<GameObject> (itemPickupCanvasPrefab, other.transform.position + 3.5f * Vector3.up, Quaternion.Euler (90.0f, 0.0f, 0.0f));
+			FillOutItemInfoCanvas (canvas, null, other.GetComponent<Item> ());
+			itemInfoCanvases.Add(other, canvas);
+		}
+		if (other.CompareTag ("Weapon")) {
+			GameObject canvas = Instantiate<GameObject> (itemPickupCanvasPrefab, other.transform.position + 3.5f * Vector3.up, Quaternion.Euler (90.0f, 0.0f, 0.0f));
+			FillOutItemInfoCanvas(canvas, (other.gameObject.GetComponent<Weapon>()), null);
+			itemInfoCanvases.Add(other, canvas);
+		}
 	}
+
+	public void OnTriggerExit (Collider other) {
+		DestroyItemInfoCanvas (other);
+	}
+
 	public void OnCollisionStay (Collision other) {
 		if (other.collider.CompareTag ("Enemy")) {
 			float damageInflicted = other.collider.GetComponent<Enemy> ().getContactDamage();
@@ -235,4 +259,58 @@ public class MainCharacterController : MonoBehaviour {
 		numRoomsCleared++;
 		UpdateScoreUI ();
 	}
+
+	/* Usage convention of this function: either w or i should be null. */
+	private void FillOutItemInfoCanvas (GameObject canvas, Weapon w, Item i) {
+		RectTransform canvasTransform = canvas.GetComponent<RectTransform> ();
+		Text itemName = canvasTransform.Find ("ItemNameText").GetComponent<Text> ();
+		Text itemDescriptionText = canvasTransform.Find ("ItemDescriptionText").GetComponent<Text> ();
+
+		RectTransform statUi = canvasTransform.Find ("StatUpdateUI").GetComponent<RectTransform> ();
+		Text moveSpeed = statUi.Find ("MovementSpeed").GetComponent<Text> ();
+		Text bulletDamage = statUi.Find ("BulletDamage").GetComponent<Text> ();
+		Text bulletDelay = statUi.Find ("BulletDelay").GetComponent<Text> ();
+		Text bulletSpeed = statUi.Find ("BulletSpeed").GetComponent<Text> ();
+		Text bulletSize = statUi.Find ("BulletSize").GetComponent<Text> ();
+		Text bulletKnockback = statUi.Find ("BulletKnockback").GetComponent<Text> ();
+		Text maxHealth = statUi.Find ("MaxHealth").GetComponent<Text> ();
+
+		string mSpeed = "", damage = "", delay = "", speed = "", size = "", knockback = "", health = "";
+
+		if (w != null) {
+			const string NO_EFFECT = " 0 ";
+			mSpeed = NO_EFFECT;
+			health = NO_EFFECT;
+			w.GetMultiplierStrings (out delay, out speed, out damage, out size, out knockback);
+
+			itemName.text = w.weaponName;
+			itemDescriptionText.text = w.weaponDescription;
+		} else if (i != null) {
+			itemName.text = i.itemName;
+			itemDescriptionText.text = i.itemDescription;
+
+			i.GetModifierStrings (out mSpeed, out damage, out delay, out speed, out size, out knockback, out health);
+		} else {
+			throw new UnityException ("Illegal call to FillOutItemInfoCanvas: both w & i null");
+		}
+
+		moveSpeed.text = mSpeed;
+		bulletDamage.text = damage;
+		bulletDelay.text = delay;
+		bulletSpeed.text = speed;
+		bulletSize.text = size;
+		bulletKnockback.text = knockback;
+		maxHealth.text = health;
+	}
+
+	private void DestroyItemInfoCanvas (Collider other) {
+		GameObject itemInfoCanvas;
+		itemInfoCanvases.TryGetValue (other, out itemInfoCanvas);
+		if (itemInfoCanvas != null) {
+			Destroy (itemInfoCanvas);
+			itemInfoCanvases.Remove (other);
+		}
+	}
+
+
 }

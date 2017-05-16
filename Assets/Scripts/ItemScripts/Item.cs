@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Item : MonoBehaviour {
+	public string itemName;
+	public string itemDescription;
+
 	public float movementSpeed;
 	public float bulletSpeed;
 	public float bulletKnockBack;
@@ -64,5 +67,50 @@ public class Item : MonoBehaviour {
 
 		p.maxHealth += maxHealth;
 		p.currentHealth += maxHealth;
+	}
+
+
+	private const string PLUS = " + ";
+	private const string MINUS = " - ";
+	private const string TIMES = " * ";
+	private const string DIVIDED = " / ";
+	private const string NO_EFFECT = " 0 ";
+	public void GetModifierStrings (out string mSpeed, out string bDamage, out string bDelay, out string bSpeed, out string bSize, out string bKnockback, out string mHealth) {
+		mSpeed = GetAdditiveModifier (movementSpeed);
+		bDamage = GetAdditiveModifier (bulletDamage);
+		bDelay = GetAdditiveModifier (bulletDelay);
+		bSpeed = GetAdditiveModifier (bulletSpeed);
+		bSize = GetAdditiveModifier (bulletSize);
+		bKnockback = GetAdditiveModifier (bulletKnockBack);
+		mHealth = GetAdditiveModifier (maxHealth);
+		if (bulletDamage == 0) {
+			if (bulletDamageMultiplier < 0) {
+				bDamage = DIVIDED + (-bulletDamageMultiplier);
+			} else if (bulletDamageMultiplier != 1 && bulletDamageMultiplier != 0) {
+				bDamage = TIMES + bulletDamageMultiplier;
+			} else {
+				bDamage = NO_EFFECT;
+			}
+		}
+
+		if (bulletDelay == 0) {
+			if (bulletDelayMultiplier < 0) {
+				bDelay = TIMES + (-bulletDamageMultiplier);
+			} else if (bulletDamageMultiplier != 1 && bulletDamageMultiplier != 0) {
+				bDelay = DIVIDED + bulletDamageMultiplier;
+			} else {
+				bDelay = NO_EFFECT;
+			}
+		}
+	}
+
+	private string GetAdditiveModifier (float modifier) {
+		if (modifier > 0) {
+			return PLUS + modifier;
+		} else if (modifier == 0) {
+			return NO_EFFECT;
+		} else {
+			return MINUS + (-modifier);
+		}
 	}
 }

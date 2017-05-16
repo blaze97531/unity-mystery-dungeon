@@ -37,7 +37,7 @@ public class GenerateRoom : MonoBehaviour {
 		weaponPrefabs = Resources.LoadAll<GameObject> ("Prefab/Weapons/PlayerWeapons");
 		bandagePrefab = Resources.Load<GameObject> ("Prefab/Bandage");
 
-		floor = new Floor(this, 10, 10);
+		floor = new Floor(this, 6, 6);
 		floor.generateGameObjects ();
 	}
 
@@ -355,8 +355,8 @@ public class GenerateRoom : MonoBehaviour {
 				roomTypes.Add(Room.Type.EMPTY);
 			}
 
-			// ~25% of the rooms will be treasure rooms.
-			while (roomTypes.Count < rooms.NumberOfSets() / 10 + rooms.NumberOfSets() / 4) {
+			// ~15% of the rooms will be treasure rooms.
+			while (roomTypes.Count < rooms.NumberOfSets() / 4) {
 				roomTypes.Add(Room.Type.TREASURE);
 			}
 
