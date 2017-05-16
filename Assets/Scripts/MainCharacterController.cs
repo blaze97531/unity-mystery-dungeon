@@ -33,6 +33,11 @@ public class MainCharacterController : MonoBehaviour {
 	private Text bulletKnockbackText;
 	private Text weaponText;
 	private Slider weaponCooldownBar;
+	private Text roomsClearedUI;
+	private Text enemiesKilledUI;
+
+	public int numRoomsCleared;
+	public int numEnemiesKilled;
 
 	// Use this for initialization
 	void Start () {
@@ -49,9 +54,12 @@ public class MainCharacterController : MonoBehaviour {
 		bulletKnockbackText = (Text)GameObject.Find ("BulletKnockback").GetComponent<Text> ();
 		weaponText = (Text)GameObject.Find ("WeaponText").GetComponent<Text> ();
 		weaponCooldownBar = (Slider)GameObject.Find ("WeaponCooldownBar").GetComponent<Slider> ();
+		roomsClearedUI = GameObject.Find ("RoomsCleared").GetComponent<Text>();
+		enemiesKilledUI = GameObject.Find ("EnemiesKilled").GetComponent<Text> ();
 
 		UpdateHealthUI ();
 		UpdateWeaponAndStatsUI ();
+		UpdateScoreUI ();
 	}
 
 	void Update () {
@@ -205,5 +213,20 @@ public class MainCharacterController : MonoBehaviour {
 
 	private void UpdateWeaponCooldownUI () {
 		weaponCooldownBar.value = weapon.currTime;
+	}
+
+	public void UpdateScoreUI () {
+		roomsClearedUI.text = numRoomsCleared.ToString ();
+		enemiesKilledUI.text = numEnemiesKilled.ToString ();
+	}
+
+	public void IncEnemiesKilled () {
+		numEnemiesKilled++;
+		UpdateScoreUI ();
+	}
+
+	public void IncRoomsCleared () {
+		numRoomsCleared++;
+		UpdateScoreUI ();
 	}
 }

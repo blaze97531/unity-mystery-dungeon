@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GenerateRoom : MonoBehaviour {
 
@@ -8,7 +9,6 @@ public class GenerateRoom : MonoBehaviour {
 	private GameObject groundPrefab;
 	private GameObject wallPrefab;
 	private GameObject fogPrefab;
-	private GameObject emptyPrefab;
 	private GameObject singleDoorPrefab;
 
 	private GameObject[] enemyPrefabs;
@@ -28,7 +28,6 @@ public class GenerateRoom : MonoBehaviour {
 		playerPrefab = Resources.Load<GameObject> ("Prefab/Player");
 		groundPrefab = Resources.Load<GameObject> ("Prefab/Ground");
 		wallPrefab = Resources.Load<GameObject> ("Prefab/Wall");
-		emptyPrefab = Resources.Load<GameObject> ("Prefab/EmptyGameObject");
 		singleDoorPrefab = Resources.Load<GameObject> ("Prefab/SingleDoor");
 		fogPrefab = Resources.Load<GameObject> ("Prefab/Fog");
 
@@ -40,7 +39,6 @@ public class GenerateRoom : MonoBehaviour {
 
 		floor = new Floor(this, 10, 10);
 		floor.generateGameObjects ();
-
 	}
 
 	void Update () {		
@@ -52,7 +50,7 @@ public class GenerateRoom : MonoBehaviour {
 				currentRoom.OpenAllDoors ();
 				currentRoom.SpawnRewards ();
 			} else {
-				/* Spawn enemies as soon as the doors close. */
+				/* Spawn enemies/treasure as soon as the doors close. */
 				if (currentRoom.AllDoorsClosed ()) {
 					currentRoom.SpawnEnemies ();
 				} else {
@@ -106,6 +104,8 @@ public class GenerateRoom : MonoBehaviour {
 			STARTING, HOSTILES, TREASURE, EMPTY
 		}
 
+		private Floor enclosingInstance;
+
 		// The grid cells of the floor that comprise this room
 		public List<Cell> cells; 
 
@@ -126,7 +126,8 @@ public class GenerateRoom : MonoBehaviour {
 		private List<GameObject> rewards;
 		private List<Vector3> rewardSpawnPositions;
 
-		public Room (List<Cell> cells, Room.Type roomType) {
+		public Room (Floor enclosingInstance, List<Cell> cells, Room.Type roomType) {
+			this.enclosingInstance = enclosingInstance;
 			this.cells = cells;
 			this.roomType = roomType;
 			this.doors = new List<GameObject>();
@@ -183,7 +184,12 @@ public class GenerateRoom : MonoBehaviour {
 			for (int i = 0; i < enemiesToSpawn.Count; i++) {
 				if (CanSpawnObjectAt (enemiesToSpawn [i], spawnPositions [i])) {
 					GameObject newEnemy = Instantiate<GameObject> (enemiesToSpawn [i], spawnPositions [i], Quaternion.identity);
-					aliveEnemies.Add (newEnemy);
+
+					Enemy newEnemyScript = newEnemy.GetComponent<Enemy> ();
+					if (newEnemyScript != null) {
+						ApplyStrengthMultiplier (newEnemyScript, 1.0f + 0.02f * enclosingInstance.numRoomsCleared);
+						aliveEnemies.Add (newEnemy);
+					}
 				}
 			}
 			enemiesToSpawn.Clear ();
@@ -193,7 +199,7 @@ public class GenerateRoom : MonoBehaviour {
 		public void SpawnRewards () {
 			for (int i = 0; i < rewards.Count; i++) {
 				if (CanSpawnObjectAt (rewards [i], rewardSpawnPositions [i])) {
-					GameObject newReward = Instantiate<GameObject> (rewards [i], rewardSpawnPositions [i], Quaternion.identity);
+					Instantiate<GameObject> (rewards [i], rewardSpawnPositions [i], Quaternion.identity);
 				}
 			}
 			rewards.Clear ();
@@ -201,6 +207,11 @@ public class GenerateRoom : MonoBehaviour {
 		}
 
 		public bool CheckIfCleared () {
+			// Once the room has been cleared, it will always be cleared.
+			if (cleared) {
+				return true;
+			}
+				
 			if (roomType == Type.HOSTILES) {
 				aliveEnemies.RemoveAll (IsNull);
 				cleared = aliveEnemies.Count == 0 && enemiesToSpawn.Count == 0;
@@ -209,6 +220,14 @@ public class GenerateRoom : MonoBehaviour {
 			} else if (roomType == Type.TREASURE) {
 				cleared = (enemiesToSpawn.Count == 0);
 			}
+				
+			if (cleared) {
+				// This code here will only run when the room is first cleared.
+				if (roomType != Type.STARTING) {
+					enclosingInstance.IncRoomsCleared ();
+				}
+			}
+
 			return cleared;
 		}
 
@@ -234,6 +253,9 @@ public class GenerateRoom : MonoBehaviour {
 		private int[] delta_zs;
 		private int[] cumulative_delta_xs; 
 		private int[] cumulative_delta_zs;
+
+		// The number of rooms cleared on this floor.
+		public int numRoomsCleared;
 
 		// UnionFind structure where each set is all cells that make up one room.
 		private UnionFind<Cell> rooms;
@@ -346,12 +368,12 @@ public class GenerateRoom : MonoBehaviour {
 			foreach (List<Cell> cellList in rooms.GetSets()) {
 				// Room types are doled out at random.
 				int rand_index = Random.Range(0, roomTypes.Count);
-				cellsToRooms.Add(cellList, new Room(cellList, roomTypes[rand_index]));
+				cellsToRooms.Add(cellList, new Room(this, cellList, roomTypes[rand_index]));
 				roomTypes.RemoveAt(rand_index);
 			}
 
 			// Probability of adding an unncessary door (a door that connects two sections that are already connected).
-			float probUnnecessaryDoor = 0.25f; 
+			float probUnnecessaryDoor = 0.3125f; 
 			// Join the rooms by adding doors. Enough doors have been added once the entire structure is a single set.
 			while (unionFind.NumberOfSets() > 1) {
 				// Attempt to randomly replace a wall with a door.
@@ -539,6 +561,11 @@ public class GenerateRoom : MonoBehaviour {
 			}
 		}
 
+		public void IncRoomsCleared () {
+			enclosingInstance.player.GetComponent<MainCharacterController> ().IncRoomsCleared ();
+			numRoomsCleared++;
+		}
+
 		public Room GetRoomContaining(Vector3 position) {
 			Room room;
 			cellsToRooms.TryGetValue (rooms.Find(GetCellContaining (position.x, position.z)), out room);
@@ -662,6 +689,14 @@ public class GenerateRoom : MonoBehaviour {
 
 		Debug.Log ("Warning: CanSpawnObject() failed to check the collider of an object");
 		return true;
+	}
+
+	private static void ApplyStrengthMultiplier (Enemy e, float multiplier) {
+		e.bulletDamage *= multiplier;
+		e.bulletDelay *= multiplier;
+		e.contactDamage *= multiplier;
+		e.MAX_HEALTH *= multiplier;
+		e.knockBackResistance *= multiplier;
 	}
 
 	// Very poorly optimized implementation of the UnionFind data structure

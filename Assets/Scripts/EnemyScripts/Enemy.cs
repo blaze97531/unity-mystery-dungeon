@@ -44,6 +44,7 @@ public class Enemy : MonoBehaviour {
 	public virtual void inflictDamage (float amount) {
 		current_health -= amount;
 		if (current_health <= 0.0f) {
+			player.GetComponent<MainCharacterController> ().IncEnemiesKilled ();
 			Destroy (gameObject);
 		}
 	}
