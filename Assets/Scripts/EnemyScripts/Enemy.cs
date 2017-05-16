@@ -51,7 +51,9 @@ public class Enemy : MonoBehaviour {
 	//some useful methods for enemy AIs
 	public bool lookingAtPlayer(){
 		if (canSeePlayer()){
-			if (Vector3.Angle (transform.forward, Vector3.Normalize(vectorToPlayer())) < 1)
+			Vector3 facing =  Vector3.Normalize(vectorToPlayer());
+			facing.y = 0;
+			if (Vector3.Angle (transform.forward, facing) < 1)
 				return true;
 		}
 		return false;

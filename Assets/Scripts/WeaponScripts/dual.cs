@@ -4,11 +4,6 @@ using UnityEngine;
 
 public class dual : Weapon {
 
-	void Start () {
-		bullet = Resources.Load("Prefab/Bullet");
-	}
-
-
 	public override void fire(Vector3 position, Vector3 velocity, Vector3 target, float bulletDelay, float bulletSpeed, float bulletDamage, float bulletSize, float bulletKnockBack){
 		bulletDelay = bulletDelay * 1.5f;
 		if (currTime >= bulletDelay) {

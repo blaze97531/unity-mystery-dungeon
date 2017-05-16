@@ -138,6 +138,25 @@ public class MainCharacterController : MonoBehaviour {
 			if(Time.time >= invincibleTime) //player gets invicibility for a short time when he gets hit
 				inflictDamage (damageInflicted);
 		}
+		if (other.CompareTag ("Weapon")) {
+			weapon = other.GetComponent<Weapon>();
+			other.gameObject.SetActive (false);
+			UpdateWeaponUI ();
+		}
+		if (other.CompareTag ("Item")) {
+			other.GetComponent<Item>().apply(this);
+			other.gameObject.SetActive (false);
+			UpdateStatsUI ();
+			UpdateHealthUI ();
+		}
+		if (other.CompareTag ("Bandage") && currentHealth < maxHealth) {
+			if (currentHealth + 1 > maxHealth)
+				currentHealth = maxHealth;
+			else
+				currentHealth = currentHealth + 1;
+			other.gameObject.SetActive (false);
+			UpdateHealthUI ();
+		}
 	}
 	public void OnCollisionStay (Collision other) {
 		if (other.collider.CompareTag ("Enemy")) {

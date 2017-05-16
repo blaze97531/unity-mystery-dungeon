@@ -17,8 +17,10 @@ public class NavMeshZombie : Enemy {
 
 		Vector3 dir = agent.desiredVelocity;
 		dir.y = 0;
-		Quaternion rot = Quaternion.LookRotation (dir,Vector3.up);
-		rb.rotation = Quaternion.SlerpUnclamped(rb.rotation, rot,turnSpeed * Time.fixedDeltaTime);
+		if(!dir.Equals(Vector3.zero)){
+			Quaternion rot = Quaternion.LookRotation (dir,Vector3.up);
+			rb.rotation = Quaternion.SlerpUnclamped(rb.rotation, rot,turnSpeed * Time.fixedDeltaTime);
+		}
 	}
 
 	new void OnTriggerEnter (Collider other) {
