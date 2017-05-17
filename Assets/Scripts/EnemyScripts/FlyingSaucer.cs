@@ -30,6 +30,7 @@ public class FlyingSaucer : Enemy {
 	void Update () {
 		currTime = currTime + Time.deltaTime;
 		if (superState.Equals("initIdle")) {
+			facePlayer ();
 			if (stateTime < Time.time) {
 				chooseState(0);
 			}

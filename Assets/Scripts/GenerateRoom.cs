@@ -50,10 +50,33 @@ public class GenerateRoom : MonoBehaviour {
 		floor.generateGameObjects ();
 	}
 
-	void Update () {		
-		// Quits game. I've left this at the beginning of Update() in case there is an error.
-		if (Input.GetKeyDown (KeyCode.Q)) {
-			Application.Quit ();
+	void Update () {
+		if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.RightCommand)) {
+			// Quits game. I've left this at the beginning of Update() in case there is an error.
+			if (Input.GetKeyDown (KeyCode.Q)) {
+				Application.Quit ();
+			}
+
+			// Developer-mode cheats. Removes all fog.
+			if (Input.GetKeyDown (KeyCode.C)) {
+				foreach (Room r in floor.cellsToRooms.Values) {
+					r.ClearFog ();
+				}
+			}
+			// Teleports player to boss teleporter.
+			if (Input.GetKeyDown(KeyCode.T) && player != null && bossTeleporterSpawned) {
+				Vector3 teleporterPosition = GameObject.FindWithTag("BossTeleporter").transform.position;
+				player.transform.position = new Vector3(teleporterPosition.x, player.transform.position.y, teleporterPosition.z);
+			}
+
+			// Increases the player's stats
+			if (Input.GetKeyDown (KeyCode.I) && player != null) {
+				MainCharacterController playerScript = player.GetComponent<MainCharacterController> ();
+				itemPrefabs [0].GetComponent<Item> ().apply (playerScript);
+				playerScript.UpdateHealthUI ();
+				playerScript.UpdateWeaponAndStatsUI ();
+			}
+
 		}
 
 		if (playerSpawned && player != null) {
@@ -72,13 +95,6 @@ public class GenerateRoom : MonoBehaviour {
 						currentRoom.CloseAllDoors ();
 					}
 				}
-			}
-		}
-
-		// Developer-mode cheats. Removes all fog.
-		if (Input.GetKeyDown (KeyCode.C)) {
-			foreach (Room r in floor.cellsToRooms.Values) {
-				r.ClearFog ();
 			}
 		}
 	}

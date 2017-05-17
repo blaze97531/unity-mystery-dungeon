@@ -238,13 +238,13 @@ public class MainCharacterController : MonoBehaviour {
 		}
 	}
 
-	private void UpdateHealthUI () {
+	public void UpdateHealthUI () {
 		healthBar.maxValue = maxHealth;
 		healthBar.value = currentHealth;
 		healthText.text = currentHealth.ToString("F2") + " / " + maxHealth.ToString("F2");
 	}
 
-	private void UpdateWeaponAndStatsUI () {
+	public void UpdateWeaponAndStatsUI () {
 		float damage = bulletDamage;
 		float delay = bulletDelay;
 		float speed = bulletSpeed;
