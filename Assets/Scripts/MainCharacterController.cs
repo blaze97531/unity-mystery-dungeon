@@ -37,7 +37,6 @@ public class MainCharacterController : MonoBehaviour {
 	private Text enemiesKilledUI;
 	private Text bossName;
 	private Slider bossHealthBar;
-	private Text bossHealthText;
 	private GameObject bossCanvas;
 
 	public int numRoomsCleared;
@@ -45,6 +44,7 @@ public class MainCharacterController : MonoBehaviour {
 
 	private GameObject itemPickupCanvasPrefab;
 	private GameObject teleportToBossCanvasPrefab;
+	private GameObject gameCompleteCanvasPrefab;
 	private Dictionary<Collider, GameObject> itemInfoCanvases;
 
 	// Use this for initialization
@@ -54,6 +54,7 @@ public class MainCharacterController : MonoBehaviour {
 
 		itemPickupCanvasPrefab = Resources.Load<GameObject> ("Prefab/ItemPickupCanvas");
 		teleportToBossCanvasPrefab = Resources.Load<GameObject> ("Prefab/BossTeleportPrompt");
+		gameCompleteCanvasPrefab = Resources.Load<GameObject> ("Prefab/GameCompleteUI");
 
 		healthBar = (Slider)GameObject.Find ("HealthBar").GetComponent<Slider> ();
 		healthText = (Text)GameObject.Find ("HealthText").GetComponent<Text> ();
@@ -69,7 +70,6 @@ public class MainCharacterController : MonoBehaviour {
 		enemiesKilledUI = GameObject.Find ("EnemiesKilled").GetComponent<Text> ();
 		bossCanvas = GameObject.Find ("BossUI");
 		bossHealthBar = GameObject.Find ("BossHealthBar").GetComponent<Slider> ();
-		bossHealthText = GameObject.Find ("BossHealthText").GetComponent<Text> ();
 		bossName = GameObject.Find ("BossName").GetComponent<Text> ();
 		bossCanvas.SetActive (false);
 
@@ -232,7 +232,9 @@ public class MainCharacterController : MonoBehaviour {
 		UpdateHealthUI ();
 		invincibleTime = Time.time + invincibilityTime;
 		if (currentHealth <= 0.0f) {
-			//Destroy (gameObject); Player lost
+			// Need to show death screen.
+			ShowGameCompleteUI("You died.");
+			Destroy (gameObject); 
 		}
 	}
 
@@ -292,11 +294,14 @@ public class MainCharacterController : MonoBehaviour {
 
 	public void UpdateBossUI (float currentHealth, float maxHealth) {
 		bossHealthBar.value = currentHealth;
-		bossHealthText.text = currentHealth.ToString("F2") + " / " + maxHealth.ToString("F2");
 	}
 
 	public void DisableBossUI () {
 		bossCanvas.SetActive (false);
+	}
+
+	public void ShowGameCompleteUI (string message) {
+		Instantiate<GameObject> (gameCompleteCanvasPrefab).GetComponent<GameCompleteUIScript>().SetMessage(message);
 	}
 
 	public void IncEnemiesKilled () {

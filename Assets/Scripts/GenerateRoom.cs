@@ -25,6 +25,8 @@ public class GenerateRoom : MonoBehaviour {
 	private bool playerSpawned;
 	private bool bossTeleporterSpawned;
 
+	public float difficultyMultiplier = 1.0f;
+
 	// Use this for initialization
 	void Start () {
 		playerSpawned = false;
@@ -49,7 +51,7 @@ public class GenerateRoom : MonoBehaviour {
 	}
 
 	void Update () {		
-		if (playerSpawned) {
+		if (playerSpawned && player != null) {
 			Room currentRoom = floor.GetRoomContaining (player.transform.position);
 			if (currentRoom != null) {
 				currentRoom.ClearFog ();
@@ -78,7 +80,7 @@ public class GenerateRoom : MonoBehaviour {
 
 	public void SpawnABoss () {
 		GameObject boss = bossPrefabs[Random.Range(0, bossPrefabs.Length)];
-		Instantiate<GameObject> (boss);
+		ApplyStrengthMultiplier (Instantiate<GameObject> (boss).GetComponent<Enemy> (), difficultyMultiplier);
 	}
 		
 	private enum CellEdge {
@@ -201,7 +203,7 @@ public class GenerateRoom : MonoBehaviour {
 
 					Enemy newEnemyScript = newEnemy.GetComponent<Enemy> ();
 					if (newEnemyScript != null) {
-						ApplyStrengthMultiplier (newEnemyScript, 1.0f + 0.02f * enclosingInstance.numRoomsCleared);
+						ApplyStrengthMultiplier (newEnemyScript, (1.0f + 0.02f * enclosingInstance.numRoomsCleared) * enclosingInstance.enclosingInstance.difficultyMultiplier);
 						aliveEnemies.Add (newEnemy);
 					}
 				}
@@ -260,7 +262,7 @@ public class GenerateRoom : MonoBehaviour {
 	}
 
 	private class Floor {
-		private GenerateRoom enclosingInstance;
+		public GenerateRoom enclosingInstance;
 		private Cell[,] cells;
 		private CellEdge[] negative_x_border;
 		private CellEdge[] negative_z_border;

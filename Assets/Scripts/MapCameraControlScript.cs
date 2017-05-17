@@ -9,11 +9,12 @@ public class MapCameraControlScript : MonoBehaviour {
 	void Update () {
 		GameObject ground = GameObject.FindWithTag ("Ground");
 		Camera camera = GetComponent<Camera> ();
-
-		float a = 2.0f * Mathf.Atan (camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
-		float camera_distance_z = ground.transform.localScale.z / a;
-		float camera_distance_x = ground.transform.localScale.x / camera.aspect / a;
-		camera.transform.position = new Vector3(ground.transform.position.x, Mathf.Max(camera_distance_x, camera_distance_z), ground.transform.position.z);
+		if (ground != null) {
+			float a = 2.0f * Mathf.Atan (camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+			float camera_distance_z = ground.transform.localScale.z / a;
+			float camera_distance_x = ground.transform.localScale.x / camera.aspect / a;
+			camera.transform.position = new Vector3 (ground.transform.position.x, Mathf.Max (camera_distance_x, camera_distance_z), ground.transform.position.z);
+		}
 
 		if (Input.GetKeyDown (KeyCode.M)) {
 			mapShown = !mapShown;
@@ -23,6 +24,6 @@ public class MapCameraControlScript : MonoBehaviour {
 				camera.rect = new Rect (0.0f, 0.0f, 0.0f, 0.0f);
 			}
 		}
-				
+		
 	}
 }

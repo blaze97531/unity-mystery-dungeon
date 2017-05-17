@@ -60,6 +60,7 @@ public class Enemy : MonoBehaviour {
 			playerController.IncEnemiesKilled ();
 			if (linked_to_boss_ui) {
 				UnlinkFromBossUI ();
+				playerController.ShowGameCompleteUI ("Victory!");
 			}
 			Destroy (gameObject);
 		}
