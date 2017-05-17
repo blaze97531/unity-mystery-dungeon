@@ -180,7 +180,7 @@ public class MainCharacterController : MonoBehaviour {
 			transform.position = new Vector3 (-250.0f, transform.position.y, -257.5f);
 			DestroyItemInfoCanvas (other);
 
-			GameObject.Find("Root").GetComponent<GenerateRoom>().SpawnABoss();
+			GameObject.FindWithTag("Root").GetComponent<GenerateRoom>().SpawnABoss();
 		}
 	}
 		

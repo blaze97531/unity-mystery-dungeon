@@ -51,6 +51,11 @@ public class GenerateRoom : MonoBehaviour {
 	}
 
 	void Update () {		
+		// Quits game. I've left this at the beginning of Update() in case there is an error.
+		if (Input.GetKeyDown (KeyCode.Q)) {
+			Application.Quit ();
+		}
+
 		if (playerSpawned && player != null) {
 			Room currentRoom = floor.GetRoomContaining (player.transform.position);
 			if (currentRoom != null) {
