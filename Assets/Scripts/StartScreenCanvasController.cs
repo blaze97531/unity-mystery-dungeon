@@ -21,6 +21,10 @@ public class StartScreenCanvasController : MonoBehaviour {
 		Destroy (gameObject);
 	}
 
+	public void OnQuitClicked () {
+		Application.Quit ();
+	}
+
 	public void OnDifficultySelected () {
 		if (difficultyDropdown.value == 0) {
 			difficulty = 0.75f;
