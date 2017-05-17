@@ -95,9 +95,9 @@ public class Item : MonoBehaviour {
 
 		if (bulletDelay == 0) {
 			if (bulletDelayMultiplier < 0) {
-				bDelay = TIMES + (-bulletDamageMultiplier);
-			} else if (bulletDamageMultiplier != 1 && bulletDamageMultiplier != 0) {
-				bDelay = DIVIDED + bulletDamageMultiplier;
+				bDelay = TIMES + (-bulletDelayMultiplier);
+			} else if (bulletDamageMultiplier != 1 && bulletDelayMultiplier != 0) {
+				bDelay = DIVIDED + bulletDelayMultiplier;
 			} else {
 				bDelay = NO_EFFECT;
 			}

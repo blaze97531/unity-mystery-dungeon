@@ -35,11 +35,16 @@ public class MainCharacterController : MonoBehaviour {
 	private Slider weaponCooldownBar;
 	private Text roomsClearedUI;
 	private Text enemiesKilledUI;
+	private Text bossName;
+	private Slider bossHealthBar;
+	private Text bossHealthText;
+	private GameObject bossCanvas;
 
 	public int numRoomsCleared;
 	public int numEnemiesKilled;
 
 	private GameObject itemPickupCanvasPrefab;
+	private GameObject teleportToBossCanvasPrefab;
 	private Dictionary<Collider, GameObject> itemInfoCanvases;
 
 	// Use this for initialization
@@ -48,6 +53,7 @@ public class MainCharacterController : MonoBehaviour {
 		currentHealth = maxHealth;
 
 		itemPickupCanvasPrefab = Resources.Load<GameObject> ("Prefab/ItemPickupCanvas");
+		teleportToBossCanvasPrefab = Resources.Load<GameObject> ("Prefab/BossTeleportPrompt");
 
 		healthBar = (Slider)GameObject.Find ("HealthBar").GetComponent<Slider> ();
 		healthText = (Text)GameObject.Find ("HealthText").GetComponent<Text> ();
@@ -61,6 +67,11 @@ public class MainCharacterController : MonoBehaviour {
 		weaponCooldownBar = (Slider)GameObject.Find ("WeaponCooldownBar").GetComponent<Slider> ();
 		roomsClearedUI = GameObject.Find ("RoomsCleared").GetComponent<Text>();
 		enemiesKilledUI = GameObject.Find ("EnemiesKilled").GetComponent<Text> ();
+		bossCanvas = GameObject.Find ("BossUI");
+		bossHealthBar = GameObject.Find ("BossHealthBar").GetComponent<Slider> ();
+		bossHealthText = GameObject.Find ("BossHealthText").GetComponent<Text> ();
+		bossName = GameObject.Find ("BossName").GetComponent<Text> ();
+		bossCanvas.SetActive (false);
 
 		UpdateHealthUI ();
 		UpdateWeaponAndStatsUI ();
@@ -164,6 +175,13 @@ public class MainCharacterController : MonoBehaviour {
 				DestroyItemInfoCanvas (other);
 			}
 		}
+		if (other.CompareTag ("BossTeleporter") && Input.GetKey (KeyCode.E)) {
+			// Teleport player to boss.
+			transform.position = new Vector3 (-250.0f, transform.position.y, -257.5f);
+			DestroyItemInfoCanvas (other);
+
+			GameObject.Find("Root").GetComponent<GenerateRoom>().SpawnABoss();
+		}
 	}
 		
 	public void OnTriggerEnter (Collider other) {
@@ -191,6 +209,10 @@ public class MainCharacterController : MonoBehaviour {
 			FillOutItemInfoCanvas(canvas, (other.gameObject.GetComponent<Weapon>()), null);
 			itemInfoCanvases.Add(other, canvas);
 		}
+		if (other.CompareTag ("BossTeleporter")) {
+			GameObject canvas = Instantiate<GameObject> (teleportToBossCanvasPrefab, other.transform.position + 3.5f * Vector3.up, Quaternion.Euler (90.0f, 0.0f, 0.0f));
+			itemInfoCanvases.Add (other, canvas);
+		}
 	}
 
 	public void OnTriggerExit (Collider other) {
@@ -217,7 +239,7 @@ public class MainCharacterController : MonoBehaviour {
 	private void UpdateHealthUI () {
 		healthBar.maxValue = maxHealth;
 		healthBar.value = currentHealth;
-		healthText.text = currentHealth + " / " + maxHealth;
+		healthText.text = currentHealth.ToString("F2") + " / " + maxHealth.ToString("F2");
 	}
 
 	private void UpdateWeaponAndStatsUI () {
@@ -227,18 +249,29 @@ public class MainCharacterController : MonoBehaviour {
 		float size = bulletSize;
 		float knockback = bulletKnockBack;
 
-		weapon.ApplyMultipliers (ref delay, ref speed, ref damage, ref size, ref knockback);
+		string delayM = "", speedM = "", damageM = "", sizeM = "", knockbackM = "";
 
-		movementSpeedText.text = movementSpeed.ToString();
-		bulletDamageText.text = damage.ToString ();
-		bulletDelayText.text = delay.ToString();
-		bulletSpeedText.text = speed.ToString();
-		bulletSizeText.text = size.ToString();
-		bulletKnockbackText.text = knockback.ToString();
+		weapon.ApplyMultipliers (ref delay, ref speed, ref damage, ref size, ref knockback);
+		weapon.GetMultiplierStrings (out delayM, out speedM, out damageM, out sizeM, out knockbackM);
+
+		movementSpeedText.text = movementSpeed.ToString("F2");
+		bulletDamageText.text = GetStatString (weapon.bulletDamageMultiplier, bulletDamage, damage, damageM);
+		bulletDelayText.text = GetStatString (weapon.bulletDelayMultiplier, bulletDelay, delay, delayM);
+		bulletSpeedText.text = GetStatString (weapon.bulletSpeedMultiplier, bulletSpeed, speed, speedM);
+		bulletSizeText.text = GetStatString (weapon.bulletSizeMultiplier, bulletSize, size, sizeM);
+		bulletKnockbackText.text = GetStatString(weapon.bulletKnockbackMultiplier, bulletKnockBack, knockback, knockbackM);
 
 		weaponText.text = weapon.weaponName;
 		weaponCooldownBar.maxValue = delay;
 		UpdateWeaponCooldownUI ();
+	}
+
+	private static string GetStatString (float weaponMultiplierNum, float baseStat, float modStat, string multiplierString) {
+		if (weaponMultiplierNum == 1) {
+			return baseStat.ToString ("F2");
+		} else {
+			return modStat.ToString ("F2") + " (" + baseStat.ToString("F2") + multiplierString + ")";
+		}
 	}
 
 	private void UpdateWeaponCooldownUI () {
@@ -248,6 +281,22 @@ public class MainCharacterController : MonoBehaviour {
 	public void UpdateScoreUI () {
 		roomsClearedUI.text = numRoomsCleared.ToString ();
 		enemiesKilledUI.text = numEnemiesKilled.ToString ();
+	}
+
+	public void EnableBossUI (float currentHealth, float maxHealth, string name) {
+		bossHealthBar.maxValue = maxHealth;
+		bossName.text = name;
+		UpdateBossUI (currentHealth, maxHealth);
+		bossCanvas.SetActive (true);
+	}
+
+	public void UpdateBossUI (float currentHealth, float maxHealth) {
+		bossHealthBar.value = currentHealth;
+		bossHealthText.text = currentHealth.ToString("F2") + " / " + maxHealth.ToString("F2");
+	}
+
+	public void DisableBossUI () {
+		bossCanvas.SetActive (false);
 	}
 
 	public void IncEnemiesKilled () {

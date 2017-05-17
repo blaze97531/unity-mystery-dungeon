@@ -16,45 +16,54 @@ public class GenerateRoom : MonoBehaviour {
 	private GameObject[] itemPrefabs;
 	private GameObject[] weaponPrefabs;
 	private GameObject bandagePrefab;
+	private GameObject bossTeleporterPrefab;
+	private GameObject[] bossPrefabs;
 
 	private Floor floor;
 	private GameObject player;
 
 	private bool playerSpawned;
+	private bool bossTeleporterSpawned;
 
 	// Use this for initialization
 	void Start () {
 		playerSpawned = false;
+		bossTeleporterSpawned = false;
+
 		playerPrefab = Resources.Load<GameObject> ("Prefab/Player");
 		groundPrefab = Resources.Load<GameObject> ("Prefab/Ground");
 		wallPrefab = Resources.Load<GameObject> ("Prefab/Wall");
 		singleDoorPrefab = Resources.Load<GameObject> ("Prefab/SingleDoor");
 		fogPrefab = Resources.Load<GameObject> ("Prefab/Fog");
+		bossTeleporterPrefab = Resources.Load<GameObject> ("Prefab/BossTeleporter");
 
 		enemyPrefabs = Resources.LoadAll<GameObject> ("Prefab/Enemies");
 		obstaclePrefabs = Resources.LoadAll<GameObject> ("Prefab/Obstacles");
 		itemPrefabs = Resources.LoadAll<GameObject> ("Prefab/Items");
 		weaponPrefabs = Resources.LoadAll<GameObject> ("Prefab/Weapons/PlayerWeapons");
 		bandagePrefab = Resources.Load<GameObject> ("Prefab/Bandage");
+		bossPrefabs = Resources.LoadAll<GameObject> ("Prefab/Bosses");
 
-		floor = new Floor(this, 6, 6);
+		floor = new Floor(this, 8, 8);
 		floor.generateGameObjects ();
 	}
 
-	/*void Update () {		
+	void Update () {		
 		if (playerSpawned) {
 			Room currentRoom = floor.GetRoomContaining (player.transform.position);
-			currentRoom.ClearFog ();
+			if (currentRoom != null) {
+				currentRoom.ClearFog ();
 
-			if (currentRoom.CheckIfCleared ()) {
-				currentRoom.OpenAllDoors ();
-				currentRoom.SpawnRewards ();
-			} else {
-				/* Spawn enemies/treasure as soon as the doors close. *//*
-				if (currentRoom.AllDoorsClosed ()) {
-					currentRoom.SpawnEnemies ();
+				if (currentRoom.CheckIfCleared ()) {
+					currentRoom.OpenAllDoors ();
+					currentRoom.SpawnRewards ();
 				} else {
-					currentRoom.CloseAllDoors ();
+					/* Spawn enemies/treasure as soon as the doors close. */
+					if (currentRoom.AllDoorsClosed ()) {
+						currentRoom.SpawnEnemies ();
+					} else {
+						currentRoom.CloseAllDoors ();
+					}
 				}
 			}
 		}
@@ -65,7 +74,12 @@ public class GenerateRoom : MonoBehaviour {
 				r.ClearFog ();
 			}
 		}
-	}*/
+	}
+
+	public void SpawnABoss () {
+		GameObject boss = bossPrefabs[Random.Range(0, bossPrefabs.Length)];
+		Instantiate<GameObject> (boss);
+	}
 		
 	private enum CellEdge {
 		EMPTY, WALL, DOOR
@@ -101,7 +115,7 @@ public class GenerateRoom : MonoBehaviour {
 
 	private class Room {
 		public enum Type {
-			STARTING, HOSTILES, TREASURE, EMPTY
+			STARTING, HOSTILES, TREASURE, EMPTY, TELEPORTER
 		}
 
 		private Floor enclosingInstance;
@@ -215,10 +229,12 @@ public class GenerateRoom : MonoBehaviour {
 			if (roomType == Type.HOSTILES) {
 				aliveEnemies.RemoveAll (IsNull);
 				cleared = aliveEnemies.Count == 0 && enemiesToSpawn.Count == 0;
-			} else if (roomType == Type.STARTING || roomType == Type.EMPTY) {
+			} else if (roomType == Type.STARTING || roomType == Type.EMPTY || roomType == Type.TELEPORTER) {
 				cleared = true;
 			} else if (roomType == Type.TREASURE) {
 				cleared = (enemiesToSpawn.Count == 0);
+			} else {
+				throw new UnityException ("unhandled");
 			}
 				
 			if (cleared) {
@@ -350,12 +366,15 @@ public class GenerateRoom : MonoBehaviour {
 			// One starting room.
 			roomTypes.Add(Room.Type.STARTING);
 
-			// ~ 10% will be empty, including the starting room.
+			// One teleporter to the boss room
+			roomTypes.Add(Room.Type.TELEPORTER);
+
+			// Some rooms (~10%) will be empty
 			while (roomTypes.Count < rooms.NumberOfSets() / 10) {
 				roomTypes.Add(Room.Type.EMPTY);
 			}
 
-			// ~15% of the rooms will be treasure rooms.
+			// Some of the rooms (~15%) will be treasure rooms.
 			while (roomTypes.Count < rooms.NumberOfSets() / 4) {
 				roomTypes.Add(Room.Type.TREASURE);
 			}
@@ -456,17 +475,17 @@ public class GenerateRoom : MonoBehaviour {
 					if (r.roomType == Room.Type.HOSTILES) {
 						obstacles_to_spawn = Random.Range (1, 5);
 						enemies_to_spawn = Random.Range (2, 4);
-						bandage_rewards_to_spawn = Random.Range (0, 4) - 2; // 1/4 chance for bandage rewards (in each cell of the room).
+						bandage_rewards_to_spawn = Random.Range (0, 3) - 1; // 1/3 chance for bandage.
 					} else if (r.roomType == Room.Type.STARTING) {
 						if (!enclosingInstance.playerSpawned) {
-							enclosingInstance.player = Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (-250, .5f, -260), enclosingInstance.playerPrefab.transform.rotation);//new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
+							enclosingInstance.player = Instantiate<GameObject> (enclosingInstance.playerPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.playerPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), enclosingInstance.playerPrefab.transform.rotation);
 							enclosingInstance.playerSpawned = true;
 						}
 						obstacles_to_spawn = 3;
 					} else if (r.roomType == Room.Type.TREASURE) {
 						obstacles_to_spawn = Random.Range (1, 5);
 						// 1/3 for no weapon, 2/3 for one weapon
-						weapons_to_spawn = Random.Range(0, 3);
+						weapons_to_spawn = Random.Range (0, 3);
 						if (weapons_to_spawn == 2) {
 							weapons_to_spawn = 1;
 						}
@@ -476,9 +495,19 @@ public class GenerateRoom : MonoBehaviour {
 						items_to_spawn -= Random.Range (0, items_to_spawn); // Note; Random.Range(0,0) always returns 0.
 
 						// 1/2 chance for a bandage
-						bandage_rewards_to_spawn = Random.Range(0, 2);
+						bandage_rewards_to_spawn = Random.Range (0, 2);
 					} else if (r.roomType == Room.Type.EMPTY) {
 						obstacles_to_spawn = Random.Range (3, 11);
+					} else if (r.roomType == Room.Type.TELEPORTER) {
+						if (!enclosingInstance.bossTeleporterSpawned) {
+							Instantiate<GameObject> (enclosingInstance.bossTeleporterPrefab, new Vector3 (cumulative_delta_xs [i] + delta_xs [i] / 2.0f, enclosingInstance.bossTeleporterPrefab.transform.position.y, cumulative_delta_zs [j] + delta_zs [j] / 2.0f), Quaternion.identity, enclosingInstance.transform);
+							enclosingInstance.bossTeleporterSpawned = true;
+						}
+
+						obstacles_to_spawn = Random.Range (2, 6);
+						bandage_rewards_to_spawn = 12 / r.cells.Count;
+					} else {
+						throw new UnityException ("unhandled");
 					}
 
 					const int GIVE_UP_THRESHOLD = 100; // Avoid infinite loops if nothing can be spawned.
@@ -568,8 +597,13 @@ public class GenerateRoom : MonoBehaviour {
 
 		public Room GetRoomContaining(Vector3 position) {
 			Room room;
-			cellsToRooms.TryGetValue (rooms.Find(GetCellContaining (position.x, position.z)), out room);
-			return room;
+			Cell cell = GetCellContaining (position.x, position.z);
+			if (cell != null) {
+				cellsToRooms.TryGetValue (rooms.Find (cell), out room);
+				return room;
+			} else {
+				return null;
+			}
 		}
 
 		/* Returns the cell that contains the given (x,z) position. Returns null if the position is out of bounds of the floor. */
@@ -659,35 +693,41 @@ public class GenerateRoom : MonoBehaviour {
 		const int LAYER_MASK = ~(1 << 8); // Ignores the ground and the fog objects. They are put in layer 8.
 		const float BUFFER_WIDTH = 0.5f; // Buffer between the object and any other objects.
 
-		CapsuleCollider capsule = spawn.GetComponentInChildren<CapsuleCollider> ();
-		if (capsule != null) {
-			Vector3 start, end;
-			if (capsule.direction == 0) {
-				start = spawnPosition + (capsule.height - capsule.radius) * Vector3.left;
-				end = spawnPosition + (capsule.height - capsule.radius) * Vector3.right;
-			} else if (capsule.direction == 1) {
-				start = spawnPosition + (capsule.height - capsule.radius) * Vector3.down;
-				end = spawnPosition + (capsule.height - capsule.radius) * Vector3.up;
-			} else if (capsule.direction == 2) {
-				start = spawnPosition + (capsule.height - capsule.radius) * Vector3.back;
-				end = spawnPosition + (capsule.height - capsule.radius) * Vector3.forward;
-			} else {
-				throw new UnityException ("Unexepted capsule direction: " + capsule.direction);
+
+		foreach (CapsuleCollider capsule in spawn.GetComponentsInChildren<CapsuleCollider> ()) {
+			if (capsule != null) {
+				Vector3 start, end;
+				if (capsule.direction == 0) {
+					start = spawnPosition + (capsule.height - capsule.radius) * Vector3.left;
+					end = spawnPosition + (capsule.height - capsule.radius) * Vector3.right;
+				} else if (capsule.direction == 1) {
+					start = spawnPosition + (capsule.height - capsule.radius) * Vector3.down;
+					end = spawnPosition + (capsule.height - capsule.radius) * Vector3.up;
+				} else if (capsule.direction == 2) {
+					start = spawnPosition + (capsule.height - capsule.radius) * Vector3.back;
+					end = spawnPosition + (capsule.height - capsule.radius) * Vector3.forward;
+				} else {
+					throw new UnityException ("Unexepted capsule direction: " + capsule.direction);
+				}
+
+				if (Physics.CheckCapsule (start, end, capsule.radius + BUFFER_WIDTH, LAYER_MASK)) {
+					return false;
+				}
 			}
-			return !Physics.CheckCapsule (start, end, capsule.radius + BUFFER_WIDTH, LAYER_MASK);
 		}
 
-		BoxCollider box = spawn.GetComponentInChildren<BoxCollider> ();
-		if (box != null) {
-			return !Physics.CheckBox (spawnPosition + box.center, box.size / 2.0f + new Vector3(BUFFER_WIDTH, BUFFER_WIDTH, BUFFER_WIDTH), orientation, LAYER_MASK);
+		foreach (BoxCollider box in spawn.GetComponentsInChildren<BoxCollider> ()) {
+			if (box != null && Physics.CheckBox (spawnPosition + box.center, box.size / 2.0f + new Vector3(BUFFER_WIDTH, BUFFER_WIDTH, BUFFER_WIDTH), orientation, LAYER_MASK)) {
+				return false;
+			}
 		}
 
-		SphereCollider sphere = spawn.GetComponentInChildren<SphereCollider> ();
-		if (sphere != null) {
-			return !Physics.CheckSphere (spawnPosition + sphere.center, sphere.radius + BUFFER_WIDTH);
+		foreach (SphereCollider sphere in spawn.GetComponentsInChildren<SphereCollider> ()) {
+			if (sphere != null && Physics.CheckSphere (spawnPosition + sphere.center, sphere.radius + BUFFER_WIDTH)) {
+				return false;
+			}
 		}
 
-		Debug.Log ("Warning: CanSpawnObject() failed to check the collider of an object");
 		return true;
 	}
 

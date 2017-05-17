@@ -1,9 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour {
 	public GameObject player;
+	// Note: this field is null unless the enemy is linked to the Boss UI.
+	private MainCharacterController playerController;
+
+	public string enemyName;
 
 	public EnemyWeapon weapon;
 	public float bulletSpeed;
@@ -21,10 +26,14 @@ public class Enemy : MonoBehaviour {
 	protected Vector3 forwardsVelocity;
 	protected Rigidbody rb;
 	protected Vector3 knockBackDirection;
+
+	protected bool linked_to_boss_ui = false;
+
 	protected void Start () {
 		rb = GetComponent<Rigidbody> ();
 		current_health = MAX_HEALTH;
 		player = GameObject.FindWithTag ("Player");
+		playerController = player.GetComponent<MainCharacterController> ();
 	}
 
 	public virtual void OnTriggerEnter (Collider other) {
@@ -43,8 +52,15 @@ public class Enemy : MonoBehaviour {
 
 	public virtual void inflictDamage (float amount) {
 		current_health -= amount;
+		if (linked_to_boss_ui) {
+			playerController.UpdateBossUI (current_health, MAX_HEALTH);
+		}
+
 		if (current_health <= 0.0f) {
-			player.GetComponent<MainCharacterController> ().IncEnemiesKilled ();
+			playerController.IncEnemiesKilled ();
+			if (linked_to_boss_ui) {
+				UnlinkFromBossUI ();
+			}
 			Destroy (gameObject);
 		}
 	}
@@ -81,5 +97,16 @@ public class Enemy : MonoBehaviour {
 
 	public float getContactDamage(){
 		return contactDamage;
+	}
+
+	protected void LinkToBossUI () {
+		playerController = player.GetComponent<MainCharacterController> ();
+		playerController.EnableBossUI (current_health, MAX_HEALTH, enemyName);
+		linked_to_boss_ui = true;
+	}
+
+	protected void UnlinkFromBossUI () {
+		playerController.DisableBossUI ();
+		linked_to_boss_ui = false;
 	}
 }

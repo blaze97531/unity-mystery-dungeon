@@ -19,14 +19,21 @@ public class FlyingSaucer : Enemy {
 	Vector3 center = new Vector3(-250,0.5f,-250);
 	new void Start(){
 		agent = GetComponent<UnityEngine.AI.NavMeshAgent> ();
-		stateTime = 0;
+		stateTime = Time.time + 2.0f; // Idle for two seconds, before starting up.
 		base.Start ();
-		superState = "alldirections";
+		superState = "initIdle";
+
+		LinkToBossUI ();
 	}
 
 	// Update is called once per frame
 	void Update () {
 		currTime = currTime + Time.deltaTime;
+		if (superState.Equals("initIdle")) {
+			if (stateTime < Time.time) {
+				chooseState(-1);
+			}
+		}
 		if (superState.Equals("alldirections")) {
 			if ((transform.position - center).magnitude > 1) {
 				agent.SetDestination (center);
