@@ -15,7 +15,15 @@ public class CameraScript : MonoBehaviour {
 		GameObject player = GameObject.FindWithTag ("Player");
 		if (player != null) {
 			playerLocation = GameObject.FindWithTag ("Player").GetComponent<Transform> ().position;
-			transform.position = new Vector3 (playerLocation.x, playerLocation.y + 10, playerLocation.z - 2);
+			transform.position = new Vector3 (playerLocation.x, transform.position.y, playerLocation.z - 2);
+
+			if (Input.GetKey (KeyCode.Equals) && transform.position.y >= 10.0f) {
+				transform.Translate (Vector3.down * CAMERA_SPEED_DEAD * Time.deltaTime, Space.World);
+			} 
+			if (Input.GetKey (KeyCode.Minus) && transform.position.y <= 20.0f) {
+				transform.Translate (Vector3.up * CAMERA_SPEED_DEAD * Time.deltaTime, Space.World);
+			}
+
 		} else {
 			/* Player is dead, can move around freely. */
 			if (Input.GetKey (KeyCode.W)) {
@@ -30,10 +38,10 @@ public class CameraScript : MonoBehaviour {
 			if (Input.GetKey (KeyCode.D)) {
 				transform.Translate (Vector3.right * CAMERA_SPEED_DEAD * Time.deltaTime, Space.World);
 			} 
-			if (Input.GetKey (KeyCode.Minus)) {
+			if (Input.GetKey (KeyCode.Equals)) {
 				transform.Translate (Vector3.down * CAMERA_SPEED_DEAD * Time.deltaTime, Space.World);
 			} 
-			if (Input.GetKey (KeyCode.Equals)) {
+			if (Input.GetKey (KeyCode.Minus)) {
 				transform.Translate (Vector3.up * CAMERA_SPEED_DEAD * Time.deltaTime, Space.World);
 			}
 		}
