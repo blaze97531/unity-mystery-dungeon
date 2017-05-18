@@ -398,7 +398,7 @@ public class GenerateRoom : MonoBehaviour {
 			}
 
 			// Some of the rooms (~15%) will be treasure rooms.
-			while (roomTypes.Count < rooms.NumberOfSets() / 10 + rooms.NumberOfSets() / 5) {
+			while (roomTypes.Count < rooms.NumberOfSets() / 4) {
 				roomTypes.Add(Room.Type.TREASURE);
 			}
 
