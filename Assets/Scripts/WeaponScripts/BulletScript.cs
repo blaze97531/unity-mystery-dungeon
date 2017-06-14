@@ -8,6 +8,13 @@ public class BulletScript : MonoBehaviour {
 	private float knockBack; //this is for determining knockback, for whenever we decide to implement that
 	private Vector3 direction;
 
+	private AudioSource gunShot;
+
+	private void Start () {
+		gunShot = GetComponent<AudioSource> ();
+		gunShot.Play ();
+	}
+
 	public void setDirection(Vector3 dir){
 		direction = dir;
 	}
